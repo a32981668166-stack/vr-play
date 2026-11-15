@@ -1,0 +1,24 @@
+{
+ "name": "Fire Copter",
+ "short_name": "Fire Copter",
+ "description": "כבאי מסוק",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "landscape",
+ "background_color": "#000000",
+ "theme_color": "#5a2a0c",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
