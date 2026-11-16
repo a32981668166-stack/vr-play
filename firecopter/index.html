@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5a2a0c">
-<link rel="icon" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>כבאי מסוק</title>
@@ -29,11 +26,12 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 #start button:disabled{opacity:.45;cursor:default}
 #keys{position:fixed;bottom:10px;right:12px;left:12px;direction:rtl;color:#c9b6a2;font-size:.8rem;pointer-events:none;text-align:center;text-shadow:0 1px 2px #000}
 </style>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>כבאי מסוק</h1><p>טסים במסוק כיבוי, ממלאים מים באגם ומטילים על השריפה לפני שהיא מגיעה לכפר.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 16.11 13:08</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 16.11 15:13</p></div>
 <div id="keys" hidden>W/S קדימה-אחורה · A/D הצידה · Q/E סיבוב · רווח/Shift למעלה-למטה · גרירה: הסתכלות · B מצבר · N התנעה · L אורות · קליק או Enter: הטלת מים · Esc: תפריט</div>
 <script>/**
  * @license
@@ -3743,7 +3741,7 @@ function resetFuel(){for(let k=0;k<GN*GN;k++){const x=cx(k),z=cz(k),h=hAt(x,z);l
 /* ---------------- trees ---------------- */
 const MOD={};
 function loadModels(cb){const B=window.FCM||{},n=Object.keys(B);let left=n.length;if(!left){cb();return;}
- for(const k of n){try{const u=Uint8Array.from(atob(B[k]),c=>c.charCodeAt(0)).buffer;new THREE.GLTFLoader().parse(u,"",g=>{MOD[k]=g.scene;if(--left===0)cb();},e=>{console.error(k,e);if(--left===0)cb();});}catch(e){console.error(e);if(--left===0)cb();}}}
+ for(const k of n){try{const u=Uint8Array.from(atob(B[k]),c=>c.charCodeAt(0)).buffer;const cib=window.createImageBitmap;try{window.createImageBitmap=undefined;}catch(e){}try{new THREE.GLTFLoader().parse(u,"",g=>{MOD[k]=g.scene;if(--left===0)cb();},e=>{console.error(k,e);if(--left===0)cb();});}finally{try{window.createImageBitmap=cib;}catch(e){}}}catch(e){console.error(e);if(--left===0)cb();}}}
 function merged(name){const o=MOD[name];if(!o)return [];o.updateMatrixWorld(true);const parts=[];o.traverse(m=>{if(m.isMesh){const g=m.geometry.clone();g.applyMatrix4(m.matrixWorld);parts.push({g,mat:m.material});}});return parts;}
 const TREES=[];let TREE_NEAR=[],TREE_FAR=null,TREE_BURNT=null;
 function buildTrees(){for(let k=0;k<5200;k++){const x=rr(-1450,1450),z=rr(-1450,1450),c=ci(x,z);if(c<0||FUEL[c]<.9)continue;const h=hAt(x,z);if(h<WL+3||inLake(x,z))continue;if(Math.hypot(x-VILLAGE.x,z-VILLAGE.z)<VILLAGE.r)continue;TREES.push({x,z,y:h,s:rr(.8,1.3),r:rnd()*6.28,c});}
