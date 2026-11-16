@@ -33,8 +33,8 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>כבאי מסוק</h1><p>טסים במסוק כיבוי, ממלאים מים באגם ומטילים על השריפה לפני שהיא מגיעה לכפר.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 15.11 18:21</p></div>
-<div id="keys" hidden>W/S קדימה-אחורה · A/D הצידה · Q/E סיבוב · רווח/Shift למעלה-למטה · גרירה: הסתכלות · קליק או Enter: הטלת מים · Esc: תפריט</div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 16.11 13:03</p></div>
+<div id="keys" hidden>W/S קדימה-אחורה · A/D הצידה · Q/E סיבוב · רווח/Shift למעלה-למטה · גרירה: הסתכלות · B מצבר · N התנעה · L אורות · קליק או Enter: הטלת מים · Esc: תפריט</div>
 <script>/**
  * @license
  * Copyright 2010-2021 Three.js Authors
@@ -3702,10 +3702,10 @@ const SUN=new THREE.DirectionalLight(0xffe2b8,1.25);SUN.position.set(500,350,-80
 const SIZE=3200,SEG=200,WL=40;
 const LAKES=[{x:-700,z:500,r:260},{x:850,z:-650,r:200}];
 const VILLAGE={x:-120,z:-760,r:150};
-function hAt(x,z){let h=60+fbm(x*.0012+3,z*.0012+7)*190-60;h+=Math.pow(fbm(x*.0006,z*.0006),2)*260;
+function hAt(x,z){let h=60+fbm(x*.0012+3,z*.0012+7)*190-60;h+=Math.pow(fbm(x*.0006,z*.0006),2)*260;const cst=1050+(fbm(z*.002,1)-.5)*260;h=mix(h,WL-30,sstep(x,cst-120,cst+90));
  for(const L of LAKES){const d=Math.hypot(x-L.x,z-L.z);h=mix(WL-14,h,sstep(d,L.r*.75,L.r*1.5));}
  const dv=Math.hypot(x-VILLAGE.x,z-VILLAGE.z);h=mix(78,h,sstep(dv,VILLAGE.r,VILLAGE.r*2.2));
- const e=Math.max(Math.abs(x),Math.abs(z));h+=sstep(e,1300,1600)*180;return h;}
+ const e=Math.max(Math.abs(x),Math.abs(z));h+=sstep(e,1300,1600)*180*(1-sstep(x,700,1000));return h;}
 const TG=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG);TG.rotateX(-Math.PI/2);const TP=TG.attributes.position,TC=new Float32Array(TP.count*3),TBASE=new Float32Array(TP.count*3);
 const cc=new THREE.Color();
 for(let i=0;i<TP.count;i++){const x=TP.getX(i),z=TP.getZ(i),h=hAt(x,z);TP.setY(i,h);const n=fbm(x*.01,z*.01),dry=fbm(x*.003+11,z*.003);
@@ -3723,9 +3723,16 @@ TMAT.onBeforeCompile=sh=>{sh.uniforms.tG={value:photo("aerial_grass_rock")};sh.u
  diffuseColor.rgb=base*1.15;`);};
 const TER=new THREE.Mesh(TG,TMAT);scene.add(TER);
 const WN=(()=>{const N=256,T=cvTex(N,N),x=T.x,d=x.createImageData(N,N);const H=(i,j)=>fbm(i/N*8,j/N*8)+fbm(i/N*23+4,j/N*23)*.4;for(let j=0;j<N;j++)for(let i=0;i<N;i++){const dx=H((i+1)%N,j)-H((i+N-1)%N,j),dz=H(i,(j+1)%N)-H(i,(j+N-1)%N),k=(j*N+i)*4;d.data[k]=128+dx*180;d.data[k+1]=128+dz*180;d.data[k+2]=255;d.data[k+3]=255;}x.putImageData(d,0,0);T.t.encoding=THREE.LinearEncoding;T.t.wrapS=T.t.wrapT=THREE.RepeatWrapping;T.t.repeat.set(60,60);T.t.needsUpdate=true;return T.t;})();
-const WATER=new THREE.Mesh(new THREE.PlaneGeometry(SIZE,SIZE),new THREE.MeshPhongMaterial({color:0x1c4660,shininess:160,specular:0xfff0d8,normalMap:WN,normalScale:new THREE.Vector2(.35,.35),transparent:true,opacity:.9}));WATER.rotation.x=-Math.PI/2;WATER.position.y=WL;scene.add(WATER);
-const FAR=new THREE.Mesh(new THREE.RingGeometry(SIZE*.7,5200,32,1),new THREE.MeshLambertMaterial({color:0x6a6450}));FAR.rotation.x=-Math.PI/2;FAR.position.y=150;scene.add(FAR);
-const inLake=(x,z)=>LAKES.some(L=>Math.hypot(x-L.x,z-L.z)<L.r*.8);
+const WUN={tN:{value:WN},t:{value:0},sun:{value:V3(.5,.35,-.8).normalize()},top:{value:new THREE.Color(0x4a78b8)},hor:{value:new THREE.Color(0xe6c79a)},deep:{value:new THREE.Color(0x0b3a48)},fogC:{value:FOGC},fogN:{value:1300},fogF:{value:4200}};
+const WATER=new THREE.Mesh(new THREE.PlaneGeometry(SIZE*2.2,SIZE*2.2,1,1),new THREE.ShaderMaterial({uniforms:WUN,transparent:true,
+ vertexShader:"varying vec3 vW;varying float vD;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vec4 mv=viewMatrix*w;vD=-mv.z;gl_Position=projectionMatrix*mv;}",
+ fragmentShader:`uniform sampler2D tN;uniform float t;uniform vec3 sun,top,hor,deep,fogC;uniform float fogN,fogF;varying vec3 vW;varying float vD;
+ void main(){vec2 uv=vW.xz;vec3 n1=texture2D(tN,uv*.012+vec2(t*.010,t*.006)).xyz*2.-1.,n2=texture2D(tN,uv*.031-vec2(t*.013,-t*.008)).xyz*2.-1.,n3=texture2D(tN,uv*.0025+vec2(t*.002,0.)).xyz*2.-1.;
+ vec3 n=normalize(vec3(n1.x+n2.x*.6+n3.x*1.2,3.5,n1.y+n2.y*.6+n3.y*1.2));vec3 v=normalize(cameraPosition-vW);float fr=.04+.96*pow(1.-max(dot(v,n),0.),5.);
+ vec3 r=reflect(-v,n);vec3 sky=mix(hor,top,pow(max(r.y,0.),.5));vec3 c=mix(deep,sky,fr);float sp=pow(max(dot(r,sun),0.),400.)*6.+pow(max(dot(r,sun),0.),40.)*.25;c+=vec3(1.,.9,.7)*sp;
+ float f=smoothstep(fogN,fogF,vD);gl_FragColor=vec4(mix(c,fogC,f),.93);}`}));WATER.rotation.x=-Math.PI/2;WATER.position.y=WL;scene.add(WATER);
+const FAR=new THREE.Mesh(new THREE.RingGeometry(SIZE*.7,5200,32,1,Math.PI*.75,Math.PI*.5),new THREE.MeshLambertMaterial({color:0x6a6450}));FAR.rotation.x=-Math.PI/2;FAR.rotation.z=Math.PI*.5;FAR.position.y=150;scene.add(FAR);
+const inLake=(x,z)=>LAKES.some(L=>Math.hypot(x-L.x,z-L.z)<L.r*.8)||hAt(x,z)<WL-3;
 /* ---------------- fire grid ---------------- */
 const CELL=32,GN=Math.floor(SIZE/CELL),G0=-SIZE/2;
 const FUEL=new Float32Array(GN*GN),BURN=new Float32Array(GN*GN),WET=new Float32Array(GN*GN),DONE=new Uint8Array(GN*GN);
@@ -3798,6 +3805,8 @@ const HS={vel:V3(),yaw:0,pitch:0,roll:0,alt:0};
 function buildHeli(){const src=MOD.EC135||MOD.Huey;const EC=!!MOD.EC135;let o;if(src){o=src;o.traverse(m=>{if(m.isMesh){const n=(m.name+" "+(m.parent&&m.parent.name)).toLowerCase();if(n.includes("pcylinder1")){m.visible=false;return;}if(!m.geometry.attributes.normal)m.geometry.computeVertexNormals();const mt=m.material;const glass=n.includes("glass")||(mt.name||"").toLowerCase().includes("glass");
    m.material=glass?new THREE.MeshPhongMaterial({color:0x9fb8c8,transparent:true,opacity:.18,shininess:100,depthWrite:false,side:THREE.DoubleSide}):new THREE.MeshLambertMaterial({map:mt.map||null,color:mt.color||0xffffff,side:THREE.DoubleSide});}
    if(/^Mainrotor$/.test(m.name))ROTOR=m;if(/^TailRotor$/.test(m.name))TROTOR=m;});
+  const cen=(nm)=>{let r=null;o.traverse(n=>{if(!r&&n.name&&n.name.replace(/[^a-z_0-9]/gi,'')===nm)r=n;});if(!r)return null;let mesh=null;r.traverse(n=>{if(!mesh&&n.isMesh)mesh=n;});if(!mesh)return null;mesh.geometry.computeBoundingBox();const c=mesh.geometry.boundingBox.getCenter(V3());mesh.geometry.translate(-c.x,-c.y,-c.z);mesh.position.add(c);return mesh;};
+  ROTOR=cen("blade_0")||ROTOR;TROTOR=cen("blade_tail_2")||TROTOR;
   o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(V3()),k=(EC?12.2:12.7)/Math.max(sz.x,sz.z);o.scale.multiplyScalar(k);const c=bb.getCenter(V3());o.position.set(-c.x*k,-bb.min.y*k,-c.z*k);
   // the body's long axis: make the nose point to -z
   const piv=new THREE.Group();piv.add(o);piv.rotation.y=Math.PI;BODY.add(piv);}
@@ -3806,7 +3815,16 @@ function buildHeli(){const src=MOD.EC135||MOD.Huey;const EC=!!MOD.EC135;let o;if
  const bm=new THREE.MeshLambertMaterial({color:0xd84a1a});BUCKET=new THREE.Group();const b=new THREE.Mesh(new THREE.CylinderGeometry(1.1,.8,1.6,14,1,true),bm);b.material.side=THREE.DoubleSide;BUCKET.add(b);const rim=new THREE.Mesh(new THREE.TorusGeometry(1.1,.06,6,18),new THREE.MeshLambertMaterial({color:0x222}));rim.rotation.x=Math.PI/2;rim.position.y=.8;BUCKET.add(rim);
  BWATER=new THREE.Mesh(new THREE.CircleGeometry(1.05,16),new THREE.MeshLambertMaterial({color:0x3a6a88}));BWATER.rotation.x=-Math.PI/2;BUCKET.add(BWATER);scene.add(BUCKET);
  const lg=new THREE.BufferGeometry().setFromPoints([V3(),V3()]);LINE=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x111111}));LINE.frustumCulled=false;scene.add(LINE);}
-let BUCKET,BWATER,LINE;const BK={p:V3(),v:V3(),water:0,drop:0,len:22};
+let BUCKET,BWATER,LINE,DISC=null;
+const ENG={batt:0,start:0,rpm:0,lights:0};
+function ENGstep(dt){if(ENG.start)ENG.rpm=Math.min(1,ENG.rpm+dt/7);else ENG.rpm=Math.max(0,ENG.rpm-dt/10);if(ROT){ROT.g.gain.value=.5*ENG.rpm;ROT.lfo.frequency.value=Math.max(.5,5.4*ENG.rpm);ROT.tw.frequency.value=200+600*ENG.rpm;}if(LAND)LAND.intensity=ENG.lights?2:0;}
+const SWC=cvTex(768,256);const SWM=new THREE.Mesh(new THREE.PlaneGeometry(.36,.12),new THREE.MeshBasicMaterial({map:SWC.t,toneMapped:false}));let SWB=[],SWH=-1;
+function drawSW(){const x=SWC.x;SWB=[];x.fillStyle="#141618";x.fillRect(0,0,768,256);const items=[["מצבר",ENG.batt,()=>{ENG.batt^=1;if(!ENG.batt)ENG.start=0;clickSnd();}],["התנעה",ENG.start,()=>{if(!ENG.batt){say("קודם להדליק מצבר",2);return;}ENG.start^=1;clickSnd();if(ENG.start)say("המנוע מתניע… חכה שהרוטור יגיע למהירות",4);}],["אורות",ENG.lights,()=>{ENG.lights^=1;clickSnd();}],["שחרור מים",BK.drop,()=>{dropWater(!BK.drop);clickSnd();}]];
+ items.forEach((it,i)=>{const X=12+i*189,on=it[1];x.fillStyle=SWH===i?"#3a3e44":"#24282c";rrect(x,X,12,177,232,14);x.fill();x.fillStyle="#555";x.fillRect(X+68,40,40,90);x.fillStyle=on?"#e8e8e8":"#9a9a9a";x.fillRect(X+72,on?44:86,32,42);x.fillStyle=on?"#40ff60":"#402020";x.beginPath();x.arc(X+88,160,12,0,7);x.fill();txt(x,it[0],X+88,222,30,"#fff","center",700);SWB.push({X,W:177,fn:it[2]});});
+ txt(x,ENG.rpm>0?`RPM ${Math.round(ENG.rpm*100)}%`:"",756,0,0,"#fff");SWC.t.needsUpdate=true;}
+function clickSnd(){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type="square";o.frequency.value=1600;g.gain.setValueAtTime(.06,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.05);o.connect(g);g.connect(MAS);o.start();o.stop(a.currentTime+.06);drawSW();}
+function swHit(ray){RC.ray.copy(ray);const h=RC.intersectObject(SWM,false)[0];if(!h)return -1;const px=h.uv.x*768;return SWB.findIndex(b=>px>=b.X&&px<=b.X+b.W);}
+let LAND=null;const BK={p:V3(),v:V3(),water:0,drop:0,len:22};
 /* ---------------- cockpit display ---------------- */
 const DASH=cvTex(768,384);const DASHM=new THREE.Mesh(new THREE.PlaneGeometry(.62,.31),new THREE.MeshBasicMaterial({map:DASH.t,toneMapped:false}));
 const MSGP=cvTex(1024,160);const MSGM=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.19),new THREE.MeshBasicMaterial({map:MSGP.t,transparent:true,depthTest:false,toneMapped:false}));MSGM.renderOrder=30;
@@ -3841,7 +3859,7 @@ function drawMenu(){const x=MENUC.x,W=1024;BTN=[];x.clearRect(0,0,W,768);rrect(x
  txt(x,"כבאי מסוק",W-40,80,56,"#fff","right",700);
  if(PAGE==="main"){MISSIONS.forEach((m,i)=>{const y=130+i*150;btn(x,40,y,W-80,130,"",()=>startMission(i));txt(x,m.n,W-80,y+56,42,"#ffcf90","right",700);txt(x,m.d,W-80,y+104,26,"#e8d8c8");const b=OPT.best[i];if(b)txt(x,"★".repeat(b),90,y+80,40,"#ffd84a","left");});
   btn(x,W-360,600,320,90,"איך משחקים",()=>{PAGE="help";drawMenu();});btn(x,W-700,600,320,90,OPT.sound?"צליל: פועל":"צליל: כבוי",()=>{OPT.sound^=1;saveOpt();setVol();drawMenu();});btn(x,40,600,300,90,"קרדיטים",()=>{PAGE="cred";drawMenu();});}
- else if(PAGE==="help"){["יד שמאל – מקל: למעלה/למטה וסיבוב המסוק.","יד ימין – מקל: קדימה, אחורה והצידה.","למלא מים: לרדת נמוך מעל האגם עד שהדלי שוקע.","להטיל מים: הדק ימין, מעל האש (רואים את העשן).","המטרה: לכבות את כל האש לפני שהיא מגיעה לכפר.","במחשב: W/S/A/D, Q/E סיבוב, רווח/Shift גובה, קליק = הטלה."].forEach((l,i)=>txt(x,l,W-60,170+i*70,32,"#fff"));btn(x,40,640,300,90,"חזרה",()=>{PAGE="main";drawMenu();});}
+ else if(PAGE==="help"){["קודם: לוח המתגים – מצבר ואז התנעה. מחכים שהרוטור יסתובב.","יד שמאל – מקל: למעלה/למטה וסיבוב המסוק.","יד ימין – מקל: קדימה, אחורה והצידה.","למלא מים: לרדת נמוך מעל האגם עד שהדלי שוקע.","להטיל מים: הדק ימין, מעל האש (רואים את העשן).","המטרה: לכבות את כל האש לפני שהיא מגיעה לכפר.","במחשב: W/S/A/D, Q/E סיבוב, רווח/Shift גובה, קליק = הטלה."].forEach((l,i)=>txt(x,l,W-60,170+i*70,32,"#fff"));btn(x,40,640,300,90,"חזרה",()=>{PAGE="main";drawMenu();});}
  else if(PAGE==="cred"){["מסוק: \"Eurocopter EC135\" – solid3ddd (CC BY 4.0), נצבע מחדש","בתים: \"Modern House Low Poly\" – Ralph_SwH, \"LowPoly Suburban House\" – darwin.art (CC BY 4.0)","עץ אורן: \"Pine tree\" – Andriy Shekh (CC BY 4.0)","three.js (MIT) · גופן Rubik (OFL) · הצלילים נוצרו בקוד"].forEach((l,i)=>txt(x,l,W-60,180+i*70,26,"#fff"));btn(x,40,640,300,90,"חזרה",()=>{PAGE="main";drawMenu();});}
  else if(PAGE==="pause"){txt(x,"מושהה",W-60,180,48,"#fff","right",700);btn(x,40,260,W-80,110,"המשך",()=>{PAUSED=false;MENU.visible=false;});btn(x,40,400,W-80,110,"התחל מחדש",()=>startMission(G.mi));btn(x,40,540,W-80,110,"תפריט ראשי",()=>{G=null;PAGE="main";drawMenu();});}
  else if(PAGE==="result"&&RES){txt(x,RES.win?"השריפה כובתה!":"הכפר נשרף",W/2+0,200,60,RES.win?"#7dff9a":"#ff7a5a","center",700);txt(x,"★".repeat(RES.stars)+"☆".repeat(3-RES.stars),W/2,300,80,"#ffd84a","center");
@@ -3856,8 +3874,8 @@ function startMission(i){const m=MISSIONS[i];resetFuel();for(const h of HOUSES){
  const wa=rnd()*6.28;WIND.set(Math.cos(wa),0,Math.sin(wa)).multiplyScalar(m.wind);if(m.wind){const d=V3(VILLAGE.x-m.fires[0][0],0,VILLAGE.z-m.fires[0][1]).normalize();WIND.copy(d).multiplyScalar(m.wind);}
  G={mi:i,m,t:0,tl:m.time,peak:m.fires.length*6,drops:0,tick:0,over:false};
  const L=LAKES[0];HELI.position.set(L.x+L.r+60,hAt(L.x+L.r+60,L.z)+60,L.z);HS.vel.set(0,0,0);HS.yaw=Math.atan2(-(m.fires[0][0]-HELI.position.x),-(m.fires[0][1]-HELI.position.z));
- BK.water=0;BK.p.copy(HELI.position).y-=BK.len;BK.v.set(0,0,0);PAUSED=false;MENU.visible=false;calib=1;
- say(i===0?"שלב 1: טוס לאגם הכחול, רד נמוך עד שהדלי שוקע ומתמלא":"שריפה! מלא מים באגם וטוס לעשן",7);}
+ ENG.batt=0;ENG.start=0;ENG.rpm=0;drawSW();HELI.position.y=hAt(HELI.position.x,HELI.position.z)+6;BK.water=0;BK.p.copy(HELI.position).y-=BK.len;BK.v.set(0,0,0);PAUSED=false;MENU.visible=false;calib=1;
+ say("הדלק מצבר ← התנעה (בלוח המתגים), ואז המראה!",7);}
 function fireTick(){const m=G.m;const wl=WIND.length(),wd=wl?WIND.clone().normalize():V3();let burning=0;
  for(let k=0;k<GN*GN;k++){if(BURN[k]<=0)continue;burning++;BURN[k]+=.12;if(WET[k]>0){BURN[k]-=WET[k]*2;}
   if(BURN[k]>6){BURN[k]=0;DONE[k]=1;FUEL[k]=0;markBurnt(k);continue;}if(BURN[k]<=0){BURN[k]=0;continue;}
@@ -3884,32 +3902,39 @@ function startRotor(){const a=ac();if(!a||ROT)return;const s=a.createBufferSourc
  ROT={g,lfo,f,wg,fg,tw};g.gain.value=.5;}
 function sfxSplash(){const a=ac();if(!a)return;const s=a.createBufferSource();s.buffer=nbuf(1.5);const f=a.createBiquadFilter();f.type="lowpass";f.frequency.value=1200;const g=a.createGain();g.gain.setValueAtTime(.4,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.4);s.connect(f);f.connect(g);g.connect(MAS);s.start();}
 /* ---------------- controls ---------------- */
-const KEYS={};addEventListener("keydown",e=>{KEYS[e.code]=1;if(e.code==="Escape"&&G&&!G.over){PAUSED=!PAUSED;if(PAUSED){PAGE="pause";showMenu();}else MENU.visible=false;}if(e.code==="Enter")dropWater(1);});addEventListener("keyup",e=>KEYS[e.code]=0);
+const KEYS={};addEventListener("keydown",e=>{KEYS[e.code]=1;if(e.code==="Escape"&&G&&!G.over){PAUSED=!PAUSED;if(PAUSED){PAGE="pause";showMenu();}else MENU.visible=false;}if(e.code==="Enter")dropWater(1);if(e.code==="KeyB"){ENG.batt^=1;if(!ENG.batt)ENG.start=0;clickSnd();}if(e.code==="KeyN"&&ENG.batt){ENG.start^=1;clickSnd();}if(e.code==="KeyL"){ENG.lights^=1;clickSnd();}});addEventListener("keyup",e=>KEYS[e.code]=0);
 const MS={x:0,y:0,down:0,drag:0,yaw:0,pitch:-.1};
 canvas.addEventListener("pointerdown",e=>{MS.down=1;MS.drag=0;MS.x=e.clientX;MS.y=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener("pointermove",e=>{const dx=e.clientX-MS.x,dy=e.clientY-MS.y;MS.x=e.clientX;MS.y=e.clientY;if(MS.down){MS.drag+=Math.abs(dx)+Math.abs(dy);MS.yaw-=dx*.004;MS.pitch=clamp(MS.pitch-dy*.004,-1.2,1);}else hoverMouse();});
-canvas.addEventListener("pointerup",()=>{MS.down=0;if(MS.drag<6){if(MENU.visible)clickMenu(mouseRay());else dropWater(1);}});
+canvas.addEventListener("pointerup",()=>{MS.down=0;if(MS.drag<6){if(MENU.visible)clickMenu(mouseRay());else if(swHit(mouseRay())>=0)SWB[swHit(mouseRay())].fn();else dropWater(1);}});
 const RC=new THREE.Raycaster(),ND=new THREE.Vector2();
 function mouseRay(){ND.set(MS.x/innerWidth*2-1,-(MS.y/innerHeight)*2+1);RC.setFromCamera(ND,cam);return RC.ray.clone();}
 function menuHit(ray){RC.ray.copy(ray);const h=RC.intersectObject(MENU,false)[0];if(!h)return -1;const px=h.uv.x*1024,py=(1-h.uv.y)*768;return BTN.findIndex(b=>px>=b.X&&px<=b.X+b.W&&py>=b.Y&&py<=b.Y+b.H);}
 function hoverMouse(){if(!MENU.visible)return;const i=menuHit(mouseRay());if(i!==HOVER){HOVER=i;drawMenu();}}
 function clickMenu(ray){const i=menuHit(ray);if(i>=0){ac();startRotor();BTN[i].fn();}}
 function dropWater(on){if(!G||G.over||PAUSED)return;BK.drop=on?1:0;}
+const gloveM=new THREE.MeshLambertMaterial({color:0x2a2622}),ctrlM=new THREE.MeshLambertMaterial({color:0x14161a});
+function handModel(side){const g=new THREE.Group(),sg=side==="left"?-1:1;const grip=new THREE.Mesh(new THREE.CylinderGeometry(.018,.021,.11,12),ctrlM);grip.rotation.x=.5;grip.position.set(0,-.02,.045);g.add(grip);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.034,.007,8,24),ctrlM);ring.position.set(sg*-.022,.01,-.01);ring.rotation.set(.3,0,sg*.6);g.add(ring);
+ const palm=new THREE.Mesh(new THREE.BoxGeometry(.075,.09,.035),gloveM);palm.position.set(sg*.03,-.02,.06);palm.rotation.set(.5,0,sg*.2);g.add(palm);
+ for(let i=0;i<3;i++){const f=new THREE.Mesh(new THREE.CapsuleGeometry?new THREE.CylinderGeometry(.01,.01,.07,8):new THREE.BoxGeometry(.02,.022,.07),gloveM);f.rotation.x=Math.PI/2+.5;f.position.set(sg*-.005,-.03-i*.022,.035);g.add(f);}
+ const idx=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,.075,8),gloveM);idx.rotation.x=Math.PI/2;idx.position.set(sg*-.004,-.004,-.03);g.add(idx);
+ const th=new THREE.Mesh(new THREE.CylinderGeometry(.011,.011,.06,8),gloveM);th.rotation.set(Math.PI/2-.2,sg*.5,0);th.position.set(sg*.012,.03,.03);g.add(th);
+ const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.038,.042,.06,12),new THREE.MeshLambertMaterial({color:0x8a2a1a}));cuff.rotation.x=Math.PI/2+.5;cuff.position.set(sg*.03,-.05,.12);g.add(cuff);return g;}
 const CT=[];for(let i=0;i<2;i++){const c=R.xr.getController(i),gp=R.xr.getControllerGrip(i);rig.add(c);rig.add(gp);const C={c,gp,src:null,side:""};CT.push(C);
  const ray=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(),V3(0,0,-1)]),new THREE.LineBasicMaterial({color:0xffcf90}));ray.scale.z=.6;c.add(ray);C.ray=ray;
- const hand=new THREE.Group();const gm=new THREE.MeshLambertMaterial({color:0x2a2622});const palm=new THREE.Mesh(new THREE.BoxGeometry(.08,.035,.1),gm);palm.position.set(0,-.01,.05);hand.add(palm);const grip=new THREE.Mesh(new THREE.CylinderGeometry(.018,.02,.11,10),new THREE.MeshLambertMaterial({color:0x111}));grip.rotation.x=.5;grip.position.set(0,-.02,.04);hand.add(grip);gp.add(hand);
- c.addEventListener("connected",e=>{C.src=e.data;C.side=e.data.handedness;});c.addEventListener("disconnected",()=>C.src=null);
- c.addEventListener("selectstart",()=>{if(MENU.visible){const o=V3(),d=V3(0,0,-1),q=new THREE.Quaternion();c.getWorldPosition(o);c.getWorldQuaternion(q);d.applyQuaternion(q);clickMenu(new THREE.Ray(o,d));}else if(C.side==="right")dropWater(1);});
- c.addEventListener("selectend",()=>{if(C.side==="right")dropWater(0);});
+ c.addEventListener("connected",e=>{C.src=e.data;C.side=e.data.handedness;if(!C.model){C.model=handModel(C.side);gp.add(C.model);}});c.addEventListener("disconnected",()=>C.src=null);
+ c.addEventListener("selectstart",()=>{if(MENU.visible){const o=V3(),d=V3(0,0,-1),q=new THREE.Quaternion();c.getWorldPosition(o);c.getWorldQuaternion(q);d.applyQuaternion(q);clickMenu(new THREE.Ray(o,d));}else{const o=V3(),d=V3(0,0,-1),q=new THREE.Quaternion();c.getWorldPosition(o);c.getWorldQuaternion(q);d.applyQuaternion(q);const i=swHit(new THREE.Ray(o,d));if(i>=0){SWB[i].fn();C.pan=1;}else if(C.side==="right")dropWater(1);}});
+ c.addEventListener("selectend",()=>{if(C.pan){C.pan=0;return;}if(C.side==="right")dropWater(0);});
  c.addEventListener("squeezestart",()=>{if(G&&!G.over){PAUSED=true;PAGE="pause";showMenu();}});}
 /* ---------------- flight ---------------- */
 let calib=0;
-function flight(dt){let fw=0,st=0,up=0,yw=0;
+function flight(dt){let fw=0,st=0,up=0,yw=0;const pw=ENG.rpm>.9?1:0;
  if(KEYS.KeyW)fw+=1;if(KEYS.KeyS)fw-=1;if(KEYS.KeyD)st+=1;if(KEYS.KeyA)st-=1;if(KEYS.Space)up+=1;if(KEYS.ShiftLeft||KEYS.ShiftRight)up-=1;if(KEYS.KeyQ)yw+=1;if(KEYS.KeyE)yw-=1;
  for(const C of CT){const g=C.src&&C.src.gamepad;if(!g||g.axes.length<4)continue;const ax=g.axes[2],ay=g.axes[3];if(C.side==="left"){if(Math.abs(ay)>.12)up-=ay;if(Math.abs(ax)>.12)yw-=ax;}else{if(Math.abs(ay)>.12)fw-=ay;if(Math.abs(ax)>.12)st+=ax;}
   if(C.side==="right"&&g.buttons[0])BK.drop=g.buttons[0].pressed?1:BK.drop&&!R.xr.isPresenting?BK.drop:0;}
  HS.yaw+=yw*dt*.9;const f=V3(-Math.sin(HS.yaw),0,-Math.cos(HS.yaw)),r=V3(-f.z,0,f.x);
- const want=f.multiplyScalar(fw*42).add(r.multiplyScalar(st*16));want.y=up*12;const load=1-BK.water*.25;
+ const want=f.multiplyScalar(fw*42*pw).add(r.multiplyScalar(st*16*pw));want.y=pw?up*12:-4;const load=1-BK.water*.25;
  HS.vel.x+=(want.x*load-HS.vel.x)*Math.min(1,dt*.7);HS.vel.z+=(want.z*load-HS.vel.z)*Math.min(1,dt*.7);HS.vel.y+=(want.y-HS.vel.y)*Math.min(1,dt*1.5);
  HELI.position.addScaledVector(HS.vel,dt);const gh=hAt(HELI.position.x,HELI.position.z);if(HELI.position.y<gh+6){HELI.position.y=gh+6;HS.vel.y=Math.max(0,HS.vel.y);}HELI.position.y=Math.min(HELI.position.y,gh+320);
  const lim=SIZE/2-120;HELI.position.x=clamp(HELI.position.x,-lim,lim);HELI.position.z=clamp(HELI.position.z,-lim,lim);
@@ -3931,7 +3956,7 @@ const clock=new THREE.Clock();let fireT=0,emitT=0,dashT=0;const tmp=V3();
 function frame(){const dt=window.__DT||Math.min(.05,clock.getDelta());
  if(G&&!PAUSED&&!G.over){G.t+=dt;G.tl-=dt;if(G.tl<=0)finish(false);fireT+=dt;if(fireT>.5){fireT=0;fireTick();}}
  if(!PAUSED){flight(dt);bucket(dt);}
- WN.offset.x+=dt*.004;WN.offset.y+=dt*.0025;if(ROTOR)ROTOR.rotation.y+=dt*30;if(TROTOR)TROTOR.rotation.x+=dt*60;
+ WUN.t.value+=dt;ENGstep(dt);if(ROTOR)ROTOR.rotation.y+=dt*32*ENG.rpm;if(TROTOR)TROTOR.rotation.x+=dt*70*ENG.rpm;if(DISC){DISC.material.opacity=ENG.rpm>.6?.12*ENG.rpm:0;}
  // particles from fire, only near cells get flames
  emitT+=dt;if(emitT>.05){emitT=0;const P=HELI.position;let n=0;for(let k=0;k<GN*GN;k++){if(BURN[k]<=0)continue;const x=cx(k),z=cz(k),d=Math.hypot(x-P.x,z-P.z);if(d>1600)continue;const h=hAt(x,z),near=d<700;
    if(rnd()<(near?.9:.35)){emit(FLAME,x+rr(-14,14),h+rr(0,4),z+rr(-14,14),WIND.x*.3,rr(5,10),WIND.z*.3,rr(.8,1.6),rr(12,20),rr(4,8),rr(.7,1),1,rr(.35,.6),.12,.4,-2);n++;}
@@ -3954,7 +3979,9 @@ function begin(){$("start").hidden=true;ac();startRotor();if(!R.xr.isPresenting)
 async function enterVR(){try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor"]});await R.xr.setSession(s);s.addEventListener("end",()=>{$("start").hidden=false;});begin();calib=1;}catch(e){$("msg").textContent="לא ניתן להיכנס למשקף: "+e.message;}}
 (async()=>{try{if(document.fonts)await Promise.race([document.fonts.load("700 40px Rubik"),new Promise(r=>setTimeout(r,1500))]);}catch(e){}
  loadModels(async()=>{try{buildHeli();}catch(e){console.error(e);}resetFuel();try{buildTrees();}catch(e){console.error(e);}try{buildVillage();}catch(e){console.error(e);}
-  HELI.add(SEAT);DASHM.position.set(-.62,.78,-.5);DASHM.rotation.x=-.7;DASHM.rotation.y=.55;DASHM.scale.setScalar(.5);SEAT.add(DASHM);MSGM.position.set(0,1.45,-1.1);SEAT.add(MSGM);MSGM.visible=false;scene.add(MENU);MENU.visible=false;
+  HELI.add(SEAT);SWM.position.set(.12,.9,-.64);SWM.rotation.x=-.55;SWM.rotation.y=-.12;SEAT.add(SWM);drawSW();
+  DISC=new THREE.Mesh(new THREE.CircleGeometry(5.6,40),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));DISC.rotation.x=-Math.PI/2;DISC.position.set(0,3.75,.3);BODY.add(DISC);
+  LAND=new THREE.SpotLight(0xfff4e0,0,400,.35,.5,1.2);LAND.position.set(0,.5,-3);BODY.add(LAND);const lt=new THREE.Object3D();lt.position.set(0,-40,-60);BODY.add(lt);LAND.target=lt;DASHM.position.set(-.62,.78,-.5);DASHM.rotation.x=-.7;DASHM.rotation.y=.55;DASHM.scale.setScalar(.5);SEAT.add(DASHM);MSGM.position.set(0,1.45,-1.1);SEAT.add(MSGM);MSGM.visible=false;scene.add(MENU);MENU.visible=false;
   const L=LAKES[0];HELI.position.set(L.x+L.r+60,hAt(L.x+L.r+60,L.z)+40,L.z);HS.yaw=Math.PI/2;BK.p.copy(HELI.position).y-=BK.len;drawDash();
   R.setAnimationLoop(frame);$("pcBtn").disabled=false;$("pcBtn").onclick=begin;
   const ok=navigator.xr&&await navigator.xr.isSessionSupported("immersive-vr").catch(()=>false);$("vrBtn").textContent=ok?"כניסה למשקף":"משקף לא זמין בדפדפן הזה";$("vrBtn").disabled=!ok;$("vrBtn").onclick=enterVR;});})();
