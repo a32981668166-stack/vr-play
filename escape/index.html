@@ -34,7 +34,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eee;font-f
 <body>
 <canvas id="scene"></canvas><div id="cross" hidden></div>
 <div id="start"><h1>מקלט 13</h1><p>שלושה שלבים. מקלט שמתמלא גז, חדר משאבות שמוצף במים, ומנהרת לייזרים. צריך לצאת – בזמן.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#7a5a5a">גרסה 16.11 12:36</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#7a5a5a">גרסה 16.11 12:45</p></div>
 <div id="keys" hidden>WASD: הליכה · גרירה: הסתכלות · קליק: לבדוק / לקחת / להשתמש · C: להתכופף · H: רמז · Esc: תפריט</div>
 <script>/**
  * @license
@@ -3904,7 +3904,7 @@ function stage2(){Object.assign(ST,{breaker:0,simon:0,locker:0,boards:0});const 
  const PAN=box(.9,.6,.12,phong(0x3a3e40,{map:photo("metal_plate",1,1)}),-W/2+.08,1.35,-1.0);PAN.rotation.y=Math.PI/2;const sw=[0,0,0,0,0];const levers=[];
  for(let i=0;i<5;i++){const g=new THREE.Group();g.position.set(-.32+i*.16,0,.08);PAN.add(g);const base=box(.08,.14,.03,phong(0x151515),0,0,0,g);const lv=box(.025,.1,.025,phong(0xd0a020),0,.04,.03,g);lv.geometry.translate(0,.04,0);lv.position.y=0;lv.rotation.x=.6;levers.push(lv);
   const lamp=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),new THREE.MeshBasicMaterial({color:0x330000}));lamp.position.set(0,.11,.02);g.add(lamp);g.userData.lamp=lamp;
-  act(g,"מפסק "+(i+1),()=>{if(ST.breaker)return say("החשמל כבר מחובר.");sw[i]^=1;lv.rotation.x=sw[i]?-.6:.6;sfx("switch");lamp.material.color.set(sw[i]?0x30ff40:0x330000);if(sw.every((v,k)=>v===PAT[k])){ST.breaker=1;sfx("power");sfx("spark");say("החשמל חובר! לוח הבקרה נדלק.",4);SIM.lit=1;drawSim();}});}
+  act(g,"מפסק "+(i+1),()=>{if(ST.breaker)return say("החשמל כבר מחובר.");sw[i]^=1;window.__SW=sw;lv.rotation.x=sw[i]?-.6:.6;sfx("switch");lamp.material.color.set(sw[i]?0x30ff40:0x330000);if(sw.every((v,k)=>v===PAT[k])){ST.breaker=1;sfx("power");sfx("spark");say("החשמל חובר! לוח הבקרה נדלק.",4);SIM.lit=1;drawSim();}});}
  // Simon control panel
  const SIM={lit:0,seq:[],inp:[],busy:0};const COLS=[0xff3030,0x3080ff,0x30ff60,0xffd030],FQ=[330,415,523,622],NAMES=["אדום","כחול","ירוק","צהוב"];
  const CON=box(1.2,.9,.6,phong(0x2a2e30,{map:photo("metal_plate",1,1)}),1.6,.45,-2.7);const top=box(1.2,.05,.65,phong(0x1a1c1e),1.6,.92,-2.7);top.rotation.x=-.3;
@@ -3957,9 +3957,9 @@ function stage3(){Object.assign(ST,{lever:0,open:0});const W=2.6,Lz=18,H=2.6;she
  rig.position.set(0,0,1.2);rig.rotation.y=0;dust();}
 function laserHit(){TUN.hitCD=2;sfx("zap");sfx("alarm");flash(0xff0000);T-=15;say("נגעת בלייזר! -15 שניות. חוזר להתחלה.",3);setTimeout(()=>fade(()=>{rig.position.set(0,0,1.2);}),500);}
 /* ============================== stages / flow ============================== */
-const STAGES=[{n:"המקלט",sub:"הגז דולף. מצא את הדרך החוצה.",time:420,build:stage1,target:()=>!ST.drawer?"מגירה":!ST.cabinet?"מגירת הארון":!ST.power?"תיבת חשמל":!ST.clockSeen&&!ST.safe?"שעון":!ST.safe?"כספת":!ST.card?"קורא כרטיסים":"מסך",hint:()=>!ST.drawer?"בדוק את המגירה בשולחן העבודה.":!ST.cabinet?"המפתח פותח את מגירת הארון האפור.":!ST.power?"הנתיך נכנס לתיבת החשמל ליד הדלת.":!ST.safe?(ST.clockSeen?"בכספת: השעה שבה השעון עצר – 0437.":"קרא את הפתק ובדוק את השעון על הקיר."):!ST.card?"העבר את כרטיס הגישה בקורא שליד הדלת.":"הקוד מופיע על המסך שעל השולחן."},
- {n:"חדר המשאבות",sub:"המים עולים. עצור את המשאבות.",time:360,build:stage2,target:()=>!ST.breaker?"תוכנית חשמל":!ST.simon?"כפתור התחלה":!ST.boards&&!(HELD&&HELD.name==="crowbar")?"מוט ברזל":"קרשים",hint:()=>!ST.breaker?"תוכנית החשמל הכחולה על הקיר מראה איך לסדר את חמשת המפסקים.":!ST.simon?"בלוח הבקרה: לחץ על הכפתור הלבן, צפה ברצף הצבעים וחזור עליו.":!HELD&&!ST.boards?"קח את מוט הברזל מהארונית שנפתחה.":"השתמש במוט הברזל על הקרשים שחוסמים את הדלת."},
- {n:"מנהרת הלייזרים",sub:"אל תיגע בקרניים. המעלית בסוף.",time:240,build:stage3,target:()=>"ידית חשמל ראשי",hint:()=>!ST.lever?"קרניים אופקיות – להתכופף מתחתן (במחשב: C). קרניים זזות – לחכות לרגע הנכון ולעבור.":"היכנס למעלית בסוף המנהרה."}];
+const STAGES=[{n:"המקלט",sub:"הגז דולף. מצא את הדרך החוצה.",time:420,goal:()=>!ST.drawer?"פתח את המגירה בשולחן":!ST.cabinet?"פתח את הארון האפור עם המפתח":!ST.power?"הכנס את הנתיך לתיבת החשמל ליד הדלת":!ST.clockSeen&&!ST.safe?"בדוק את השעון על הקיר":!ST.safe?"הקש בכספת את השעה מהשעון: 0437":!ST.card?"העבר את הכרטיס בקורא ליד הדלת":"הקש בלוח ליד הדלת את הקוד מהמסך",build:stage1,target:()=>!ST.drawer?"מגירה":!ST.cabinet?"מגירת הארון":!ST.power?"תיבת חשמל":!ST.clockSeen&&!ST.safe?"שעון":!ST.safe?"כספת":!ST.card?"קורא כרטיסים":"מסך",hint:()=>!ST.drawer?"בדוק את המגירה בשולחן העבודה.":!ST.cabinet?"המפתח פותח את מגירת הארון האפור.":!ST.power?"הנתיך נכנס לתיבת החשמל ליד הדלת.":!ST.safe?(ST.clockSeen?"בכספת: השעה שבה השעון עצר – 0437.":"קרא את הפתק ובדוק את השעון על הקיר."):!ST.card?"העבר את כרטיס הגישה בקורא שליד הדלת.":"הקוד מופיע על המסך שעל השולחן."},
+ {n:"חדר המשאבות",sub:"המים עולים. עצור את המשאבות.",time:360,goal:()=>!ST.breaker?"סדר את 5 המפסקים כמו בתוכנית הכחולה":!ST.simon?"לחץ על הכפתור הלבן וחזור על רצף הצבעים":!ST.boards&&!(HELD&&HELD.name==="crowbar")?"קח את מוט הברזל מהארונית":"שבור את הקרשים על הדלת",build:stage2,target:()=>!ST.breaker?("מפסק "+(1+[0,1,2,3,4].find(i=>!((window.__SW||[])[i]===[1,0,1,1,0][i]))||1)):!ST.simon?"כפתור התחלה":!ST.boards&&!(HELD&&HELD.name==="crowbar")?"מוט ברזל":"קרשים",hint:()=>!ST.breaker?"תוכנית החשמל הכחולה על הקיר מראה איך לסדר את חמשת המפסקים.":!ST.simon?"בלוח הבקרה: לחץ על הכפתור הלבן, צפה ברצף הצבעים וחזור עליו.":!HELD&&!ST.boards?"קח את מוט הברזל מהארונית שנפתחה.":"השתמש במוט הברזל על הקרשים שחוסמים את הדלת."},
+ {n:"מנהרת הלייזרים",sub:"אל תיגע בקרניים. המעלית בסוף.",time:240,goal:()=>!ST.lever?"עבור את הלייזרים והורד את הידית בסוף":"היכנס למעלית",build:stage3,target:()=>"ידית חשמל ראשי",hint:()=>!ST.lever?"קרניים אופקיות – להתכופף מתחתן (במחשב: C). קרניים זזות – לחכות לרגע הנכון ולעבור.":"היכנס למעלית בסוף המנהרה."}];
 function clearLevel(){scene.remove(LEVEL);LEVEL.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){[].concat(o.material).forEach(m=>{if(m.map&&m.map.isCanvasTexture)m.map.dispose();m.dispose();});}});LEVEL=new THREE.Group();scene.add(LEVEL);ACT.length=0;UPD=[];LASERS=[];dropHeld();WATER_Y=0;}
 function loadStage(i){STAGE=i;clearLevel();STAGES[i].build();T=STAGES[i].time;STAGE_T0=T;OVER=0;GAME=1;FOG.density=.02;FOG.color.setRGB(.06,.06,.06);startAmb();sfx("slam");title("שלב "+(i+1)+" מתוך 3",STAGES[i].n);setTimeout(()=>say(STAGES[i].sub,5),1200);
  if(i>OPT.unlocked){OPT.unlocked=i;saveOpt();}}
@@ -3967,6 +3967,14 @@ function stageClear(){if(OVER)return;OVER=1;sfx("stinger");RESULTS[STAGE]={t:STA
 function win(){OVER=1;GAME=0;sfx("elevator");const tot=RESULTS.reduce((s,r)=>s+(r?r.t:0),0);const best=RESULTS.filter(Boolean).length===3&&(!OPT.best||tot<OPT.best);const pb=PL();const pbest=RESULTS.filter(Boolean).length===3&&(!pb.best||tot<pb.best);if(pbest)pb.best=tot;if(best)OPT.best=tot;saveOpt();RES={tot,best:pbest,rec:best};setTimeout(()=>fade(()=>{PAGE="win";showMenu();},0xffffff),2500);}
 function lose(msg){if(OVER)return;OVER=1;GAME=0;sfx("lose");LOSEMSG=msg;setTimeout(()=>{PAGE="lose";showMenu();},1200);}
 let RES=null,LOSEMSG="";
+/* ---------------- objective + marker ---------------- */
+const GOC=cvTex(1024,120);const GOM=new THREE.Mesh(new THREE.PlaneGeometry(.85,.1),new THREE.MeshBasicMaterial({map:GOC.t,transparent:true,depthTest:false,toneMapped:false}));GOM.renderOrder=39;let GOTXT="";
+function drawGoal(t){if(t===GOTXT)return;GOTXT=t;const x=GOC.x;x.clearRect(0,0,1024,120);rrect(x,4,8,1016,104,20);x.fillStyle="rgba(0,0,0,.72)";x.fill();x.strokeStyle="#ffd84a";x.lineWidth=3;x.stroke();txt(x,"🎯 משימה: "+t,1000,76,44,"#ffe680","right",700);GOC.t.needsUpdate=true;}
+const ARW=(()=>{const T=cvTex(128,160),x=T.x;x.fillStyle="#ffd84a";x.strokeStyle="#000";x.lineWidth=6;x.beginPath();x.moveTo(64,152);x.lineTo(10,86);x.lineTo(40,86);x.lineTo(40,8);x.lineTo(88,8);x.lineTo(88,86);x.lineTo(118,86);x.closePath();x.stroke();x.fill();T.t.needsUpdate=true;
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:T.t,depthTest:false,transparent:true}));s.renderOrder=38;s.scale.set(.24,.3,1);scene.add(s);s.visible=false;return s;})();
+const MLIGHT=new THREE.PointLight(0xffd84a,0,1.6,2);scene.add(MLIGHT);
+function guide(){const on=GAME&&!OVER&&!MENU.visible;GOM.visible=on;ARW.visible=false;MLIGHT.intensity=0;if(!on)return;drawGoal(STAGES[STAGE].goal());const n=STAGES[STAGE].target();const a=n&&ACT.find(a=>a.hint===n);if(!a)return;
+ a.obj.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(a.obj),c=bb.getCenter(V3());const t=performance.now()/1000;ARW.position.set(c.x,bb.max.y+.2+Math.sin(t*4)*.05,c.z);ARW.visible=true;MLIGHT.position.copy(c);MLIGHT.intensity=.8+.6*Math.sin(t*5);}
 /* ---------------- advisor drone ---------------- */
 const DRONE=new THREE.Group();scene.add(DRONE);{const body=new THREE.Mesh(new THREE.SphereGeometry(.09,20,14),new THREE.MeshPhongMaterial({color:0x2a3038,shininess:120,specular:0x8899aa}));DRONE.add(body);
  const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,14,10),new THREE.MeshBasicMaterial({color:0x40c0ff}));eye.position.z=-.075;DRONE.add(eye);DRONE.userData.eye=eye;
@@ -3993,7 +4001,7 @@ const fmtT=s=>`${Math.floor(s/60)}:${String(Math.floor(Math.max(0,s)%60)).padSta
 function drawMenu(){const x=MC.x,W=1024;BTN=[];x.clearRect(0,0,W,768);rrect(x,4,4,W-8,760,26);x.fillStyle="rgba(14,4,4,.95)";x.fill();x.strokeStyle="#8a2a2a";x.lineWidth=4;x.stroke();txt(x,"מקלט 13",W-50,90,60,"#fff","right",700);
  if(PAGE==="main"){txt(x,"שלושה שלבים. בכל שלב – סכנה אחרת ושעון.",W-60,170,32,"#e8c8c0");
   STAGES.forEach((s,i)=>btn(x,40+i*322,230,300,170,"",()=>startAt(i),i===0,i>OPT.unlocked));STAGES.forEach((s,i)=>{const X=40+i*322;txt(x,"שלב "+(i+1),X+150,290,30,i>OPT.unlocked?"#555":"#ffb0a0","center",700);txt(x,i>OPT.unlocked?"🔒 נעול":s.n,X+150,345,32,i>OPT.unlocked?"#555":"#fff","center",700);});
-  btn(x,W-480,430,440,90,"שחקן: "+PL().name,()=>{PAGE="players";drawMenu();});btn(x,40,430,440,90,OPT.advisor?"יועץ: פועל 🤖":"יועץ: כבוי",()=>{OPT.advisor^=1;saveOpt();drawMenu();},OPT.advisor);
+  btn(x,W-480,430,440,90,"שחקן: "+PL().name,()=>{PAGE="players";drawMenu();});
   btn(x,W-480,540,440,90,"איך משחקים",()=>{PAGE="help";HP=0;drawMenu();});btn(x,40,540,210,90,"טבלת שיאים",()=>{PAGE="lb";drawMenu();});btn(x,270,540,210,90,"קרדיטים",()=>{PAGE="cred";drawMenu();});if(OPT.best)txt(x,`שיא כללי: ${fmtT(OPT.best)}`,W/2,700,30,"#ffd84a","center",700);}
  else if(PAGE==="players"){txt(x,"מי משחק עכשיו?",W-60,170,40,"#fff","right",700);OPT.players.forEach((p,i)=>{const y=200+i*62;if(y>560)return;btn(x,W-520,y,480,54,(i===OPT.cur?"✔ ":"")+p.name+(p.best?"  ·  "+fmtT(p.best):""),()=>{OPT.cur=i;saveOpt();PAGE="main";drawMenu();},i===OPT.cur);if(OPT.players.length>1)btn(x,W-640,y,100,54,"מחק",()=>{OPT.players.splice(i,1);OPT.cur=Math.min(OPT.cur,OPT.players.length-1);saveOpt();drawMenu();});});
   if(OPT.players.length<6)btn(x,40,200,360,90,"+ הוסף שחקן",()=>{NAMEBUF="";PAGE="kb";drawMenu();},1);btn(x,40,620,300,100,"חזרה",()=>{PAGE="main";drawMenu();});}
@@ -4002,8 +4010,8 @@ function drawMenu(){const x=MC.x,W=1024;BTN=[];x.clearRect(0,0,W,768);rrect(x,4,
   btn(x,W-300,530,260,76,"⌫",()=>{NAMEBUF=NAMEBUF.slice(0,-1);drawMenu();});btn(x,W-600,530,280,76,"רווח",()=>{if(NAMEBUF.length<14)NAMEBUF+=" ";drawMenu();});btn(x,W-760,530,140,76,KBEN?"עב":"EN",()=>{KBEN^=1;drawMenu();});
   btn(x,W-420,640,380,90,"שמור",()=>{const n=NAMEBUF.trim();if(!n)return;OPT.players.push({name:n,best:0});OPT.cur=OPT.players.length-1;saveOpt();PAGE="main";drawMenu();},1);btn(x,40,640,300,90,"ביטול",()=>{PAGE="players";drawMenu();});}
  else if(PAGE==="lb"){txt(x,"טבלת שיאים",W-60,170,40,"#fff","right",700);const L=OPT.players.filter(p=>p.best).sort((a,b)=>a.best-b.best);if(!L.length)txt(x,"עוד אף אחד לא סיים את כל שלושת השלבים.",W/2,320,32,"#e8c8c0","center");L.slice(0,7).forEach((p,i)=>{txt(x,["🥇","🥈","🥉"][i]||String(i+1),W-80,240+i*58,34,"#ffd84a","right",700);txt(x,p.name,W-160,240+i*58,34,"#fff");txt(x,fmtT(p.best),120,240+i*58,34,"#ffd84a","left",700);});btn(x,40,640,300,90,"חזרה",()=>{PAGE="main";drawMenu();});}
- else if(PAGE==="help"){const pages=[["1 · מה המטרה?",["אתה כלוא במקלט מתחת לאדמה.","בכל שלב יש סכנה שמתקרבת – גז, מים, לייזרים.","צריך לפתור את החידות ולצאת לפני שהשעון נגמר.","3 שלבים. כל שלב שעוברים – נפתח הבא."]],
-  ["2 · איך שולטים",null],["3 · טיפים",["בדוק כל דבר – מגירות, פתקים, מסכים, שעונים.","חפץ שמוצאים מופיע ביד. מכוונים איתו על משהו כדי להשתמש בו.","תקוע? לחיצה על הכפתור הצדדי = רמז (עולה 10 שניות).","היועץ 🤖 מגיע לבד אחרי 40 שניות בלי התקדמות – ומראה לאן ללכת.","במנהרה: להתכופף באמת מתחת לקרניים!"]]];const P=pages[HP];
+ else if(PAGE==="help"){const pages=[["1 · מה המטרה?",["אתה כלוא במקלט. בשורה הצהובה למעלה כתוב כל הזמן מה לעשות.","הולכים אל החץ הצהוב, מכוונים עליו ולוחצים.","בכל שלב יש סכנה שמתקרבת – גז, מים, לייזרים.","צריך לפתור את החידות ולצאת לפני שהשעון נגמר.","3 שלבים."]],
+  ["2 · איך שולטים",null],["3 · טיפים",["בדוק כל דבר – מגירות, פתקים, מסכים, שעונים.","חפץ שמוצאים מופיע ביד. מכוונים איתו על משהו כדי להשתמש בו.","תקוע? לחיצה על הכפתור הצדדי = רמז (עולה 10 שניות).","החץ הצהוב 🟡 תמיד מראה מה הדבר הבא. השורה למעלה אומרת מה לעשות.","במנהרה: להתכופף באמת מתחת לקרניים!"]]];const P=pages[HP];
   txt(x,P[0],W-60,170,44,"#ffb0a0","right",700);
   if(P[1])P[1].forEach((l,i)=>txt(x,"• "+l,W-70,250+i*66,32,"#fff"));
   else{const ctl=(cx,label,rows)=>{x.fillStyle="#2a2a2e";rrect(x,cx-110,200,220,300,60);x.fill();x.strokeStyle="#888";x.lineWidth=3;x.stroke();x.fillStyle="#555";x.beginPath();x.arc(cx,270,32,0,7);x.fill();x.fillStyle="#999";x.beginPath();x.arc(cx,270,16,0,7);x.fill();txt(x,label,cx,190,30,"#ffb0a0","center",700);rows.forEach((r,i)=>txt(x,r,cx,350+i*40,24,"#fff","center"));};
@@ -4042,7 +4050,7 @@ const CT=[];for(let i=0;i<2;i++){const c=R.xr.getController(i),gp=R.xr.getContro
 const clock=new THREE.Clock();let tT=0,HB=0,stepD=0;const lastP=V3();
 function frame(){const dt=window.__DT||Math.min(.05,clock.getDelta());
  if(GAME&&!OVER&&!PAUSED){T-=dt;if(T<=0){T=0;lose(STAGE===0?"הגז מילא את המקלט…":STAGE===1?"המים הציפו את חדר המשאבות…":"המנהרה ננעלה…");}}
- if(!PAUSED)for(const f of UPD)f(dt);ambientEvents(dt);advisor(dt);
+ if(!PAUSED)for(const f of UPD)f(dt);ambientEvents(dt);guide();
  // movement
  if(!R.xr.isPresenting){cam.position.y=mix(cam.position.y,CROUCH?1.05:1.65,Math.min(1,dt*8));cam.rotation.set(MS.pitch,MS.yaw,0,"YXZ");const sp=1.6*dt,f=V3(-Math.sin(MS.yaw),0,-Math.cos(MS.yaw)),r=V3(-f.z,0,f.x);
   if(!PAUSED&&!MENU.visible){if(KEYS.KeyW)rig.position.addScaledVector(f,sp);if(KEYS.KeyS)rig.position.addScaledVector(f,-sp);if(KEYS.KeyD)rig.position.addScaledVector(r,sp);if(KEYS.KeyA)rig.position.addScaledVector(r,-sp);}
@@ -4054,7 +4062,7 @@ function frame(){const dt=window.__DT||Math.min(.05,clock.getDelta());
  const hp=V3();cam.getWorldPosition(hp);stepD+=Math.hypot(hp.x-lastP.x,hp.z-lastP.z);lastP.copy(hp);if(stepD>.65){stepD=0;if(GAME)sfx("step");}
  // hover hint
  let ray=null;if(R.xr.isPresenting){const C=CT.find(c=>c.side==="right"&&c.src);if(C){const o=V3(),d=V3(0,0,-1),q=new THREE.Quaternion();C.c.getWorldPosition(o);C.c.getWorldQuaternion(q);d.applyQuaternion(q);ray=new THREE.Ray(o,d);}}else ray=centerRay();
- if(ray){const h=pick(ray);for(const C of CT)C.ray.scale.z=h?h.distance:1.2;const nAim=h&&h.object.userData.act!==undefined?ACT[h.object.userData.act]:null;if(nAim!==AIM){AIM=nAim;if(AIM&&GAME&&!OVER&&SAY<=0)say(AIM.hint+(HELD?" – להשתמש ב"+HELDN[HELD.name]+"?":""),1.2);}}
+ if(ray){const h=pick(ray);for(const C of CT)C.ray.scale.z=h?h.distance:1.2;const nAim=h&&h.object.userData.act!==undefined?ACT[h.object.userData.act]:null;if(nAim!==AIM){AIM=nAim;if(AIM&&GAME&&!OVER&&SAY<=0)say(AIM.hint+(HELD?" – לחץ כדי להשתמש ב"+HELDN[HELD.name]:" – לחץ כדי לבדוק"),1.2);}}
  if(SAY>0){SAY-=dt;if(SAY<=0)SAYM.visible=false;}
  if(TITT>0){TITT-=dt;TITM.material.opacity=clamp(Math.min(TITT,3.5-TITT)*1.5,0,1);}else TITM.material.opacity=0;
  if(FQ){FQ.t+=dt;const k=FQ.t;FADE.material.opacity=k<.4?k/.4:Math.max(0,1-(k-.55)/.45);if(k>=.45&&!FQ.done){FQ.done=1;FQ.fn&&FQ.fn();}if(k>1.05){FQ=null;FADE.material.opacity=0;}}
@@ -4063,7 +4071,7 @@ function frame(){const dt=window.__DT||Math.min(.05,clock.getDelta());
  if(GAME&&!OVER&&T<60){HB-=dt;if(HB<=0){HB=.75;tone(55,.18,"sine",.4);tone(50,.15,"sine",.3,0,.22);}}
  if(MUS){MUS.f.frequency.value=GAME&&T<60?900:380;MUS.out.gain.value=GAME?.05:.03;}
  listener();if(!window.__NR)R.render(scene,cam);}
-function begin(){$("start").hidden=true;ac();startMusic();if(!R.xr.isPresenting){$("keys").hidden=false;$("cross").hidden=false;resize();}cam.add(SAYM);SAYM.position.set(0,-.18,-.8);cam.add(TITM);TITM.position.set(0,.12,-1.0);PAGE="main";setTimeout(showMenu,250);}
+function begin(){$("start").hidden=true;ac();startMusic();if(!R.xr.isPresenting){$("keys").hidden=false;$("cross").hidden=false;resize();}cam.add(SAYM);SAYM.position.set(0,-.18,-.8);cam.add(GOM);GOM.position.set(0,.2,-.8);cam.add(TITM);TITM.position.set(0,.12,-1.0);PAGE="main";setTimeout(showMenu,250);}
 async function enterVR(){try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor"]});await R.xr.setSession(s);s.addEventListener("end",()=>{$("start").hidden=false;});begin();}catch(e){$("msg").textContent="לא ניתן להיכנס למשקף: "+e.message;}}
 (async()=>{try{if(document.fonts)await Promise.race([document.fonts.load("700 40px Rubik"),new Promise(r=>setTimeout(r,1500))]);}catch(e){}
  for(const n of Object.keys(window.EST||{})){const im=IMG[n]=new Image();im.src=window.EST[n];}
