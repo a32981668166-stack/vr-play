@@ -33,7 +33,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>כבאי מסוק</h1><p>טסים במסוק כיבוי, ממלאים מים באגם ומטילים על השריפה לפני שהיא מגיעה לכפר.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 16.11 13:03</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p id="ver" style="font-size:.8rem;color:#8a7766">גרסה 16.11 13:08</p></div>
 <div id="keys" hidden>W/S קדימה-אחורה · A/D הצידה · Q/E סיבוב · רווח/Shift למעלה-למטה · גרירה: הסתכלות · B מצבר · N התנעה · L אורות · קליק או Enter: הטלת מים · Esc: תפריט</div>
 <script>/**
  * @license
@@ -3816,7 +3816,7 @@ function buildHeli(){const src=MOD.EC135||MOD.Huey;const EC=!!MOD.EC135;let o;if
  BWATER=new THREE.Mesh(new THREE.CircleGeometry(1.05,16),new THREE.MeshLambertMaterial({color:0x3a6a88}));BWATER.rotation.x=-Math.PI/2;BUCKET.add(BWATER);scene.add(BUCKET);
  const lg=new THREE.BufferGeometry().setFromPoints([V3(),V3()]);LINE=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x111111}));LINE.frustumCulled=false;scene.add(LINE);}
 let BUCKET,BWATER,LINE,DISC=null;
-const ENG={batt:0,start:0,rpm:0,lights:0};
+const ENG={batt:1,start:1,rpm:1,lights:0};
 function ENGstep(dt){if(ENG.start)ENG.rpm=Math.min(1,ENG.rpm+dt/7);else ENG.rpm=Math.max(0,ENG.rpm-dt/10);if(ROT){ROT.g.gain.value=.5*ENG.rpm;ROT.lfo.frequency.value=Math.max(.5,5.4*ENG.rpm);ROT.tw.frequency.value=200+600*ENG.rpm;}if(LAND)LAND.intensity=ENG.lights?2:0;}
 const SWC=cvTex(768,256);const SWM=new THREE.Mesh(new THREE.PlaneGeometry(.36,.12),new THREE.MeshBasicMaterial({map:SWC.t,toneMapped:false}));let SWB=[],SWH=-1;
 function drawSW(){const x=SWC.x;SWB=[];x.fillStyle="#141618";x.fillRect(0,0,768,256);const items=[["מצבר",ENG.batt,()=>{ENG.batt^=1;if(!ENG.batt)ENG.start=0;clickSnd();}],["התנעה",ENG.start,()=>{if(!ENG.batt){say("קודם להדליק מצבר",2);return;}ENG.start^=1;clickSnd();if(ENG.start)say("המנוע מתניע… חכה שהרוטור יגיע למהירות",4);}],["אורות",ENG.lights,()=>{ENG.lights^=1;clickSnd();}],["שחרור מים",BK.drop,()=>{dropWater(!BK.drop);clickSnd();}]];
@@ -3874,8 +3874,8 @@ function startMission(i){const m=MISSIONS[i];resetFuel();for(const h of HOUSES){
  const wa=rnd()*6.28;WIND.set(Math.cos(wa),0,Math.sin(wa)).multiplyScalar(m.wind);if(m.wind){const d=V3(VILLAGE.x-m.fires[0][0],0,VILLAGE.z-m.fires[0][1]).normalize();WIND.copy(d).multiplyScalar(m.wind);}
  G={mi:i,m,t:0,tl:m.time,peak:m.fires.length*6,drops:0,tick:0,over:false};
  const L=LAKES[0];HELI.position.set(L.x+L.r+60,hAt(L.x+L.r+60,L.z)+60,L.z);HS.vel.set(0,0,0);HS.yaw=Math.atan2(-(m.fires[0][0]-HELI.position.x),-(m.fires[0][1]-HELI.position.z));
- ENG.batt=0;ENG.start=0;ENG.rpm=0;drawSW();HELI.position.y=hAt(HELI.position.x,HELI.position.z)+6;BK.water=0;BK.p.copy(HELI.position).y-=BK.len;BK.v.set(0,0,0);PAUSED=false;MENU.visible=false;calib=1;
- say("הדלק מצבר ← התנעה (בלוח המתגים), ואז המראה!",7);}
+ ENG.batt=1;ENG.start=1;ENG.rpm=1;drawSW();BK.water=0;BK.p.copy(HELI.position).y-=BK.len;BK.v.set(0,0,0);PAUSED=false;MENU.visible=false;calib=1;
+ say(i===0?"טוס לאגם, רד נמוך עד שהדלי מתמלא, וטוס לעשן":"שריפה! מלא מים וטוס לעשן",7);}
 function fireTick(){const m=G.m;const wl=WIND.length(),wd=wl?WIND.clone().normalize():V3();let burning=0;
  for(let k=0;k<GN*GN;k++){if(BURN[k]<=0)continue;burning++;BURN[k]+=.12;if(WET[k]>0){BURN[k]-=WET[k]*2;}
   if(BURN[k]>6){BURN[k]=0;DONE[k]=1;FUEL[k]=0;markBurnt(k);continue;}if(BURN[k]<=0){BURN[k]=0;continue;}
@@ -3985,7 +3985,7 @@ async function enterVR(){try{const s=await navigator.xr.requestSession("immersiv
   const L=LAKES[0];HELI.position.set(L.x+L.r+60,hAt(L.x+L.r+60,L.z)+40,L.z);HS.yaw=Math.PI/2;BK.p.copy(HELI.position).y-=BK.len;drawDash();
   R.setAnimationLoop(frame);$("pcBtn").disabled=false;$("pcBtn").onclick=begin;
   const ok=navigator.xr&&await navigator.xr.isSessionSupported("immersive-vr").catch(()=>false);$("vrBtn").textContent=ok?"כניסה למשקף":"משקף לא זמין בדפדפן הזה";$("vrBtn").disabled=!ok;$("vrBtn").onclick=enterVR;});})();
-window.__F={tickOnly(){window.__NORENDER=1;frame();window.__NORENDER=0;},get G(){return G},startMission,HELI,HS,BK,cam,MS,SEAT,BODY,frame,R,dropWater,BURN,DONE,KEYS,say};
+window.__F={get ROT_(){return [ROTOR&&ROTOR.name,TROTOR&&TROTOR.name,ENG.rpm]},tickOnly(){window.__NORENDER=1;frame();window.__NORENDER=0;},get G(){return G},startMission,HELI,HS,BK,cam,MS,SEAT,BODY,frame,R,dropWater,BURN,DONE,KEYS,say};
 })();
 </script>
 
