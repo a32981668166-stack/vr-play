@@ -31,7 +31,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>טייס קרב</h1><p>ממריאים מרמת דוד, טסים לזירה, נועלים על המטרות ומשגרים טילים – וחוזרים הביתה.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 16.11 17:21</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 16.11 17:23</p></div>
 <div id="keys" hidden>חיצים: לטוס · W/S: מצערת · T: המראה · P: טייס אוטומטי · רווח: טיל · X: נורים · R: חזרה לבסיס · B: מבער · V: מבט חיצוני · Esc: תפריט</div>
 <script>/**
  * @license
@@ -1782,7 +1782,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 			this.nodeNamesUsed = {}; // Use an THREE.ImageBitmapLoader if imageBitmaps are supported. Moves much of the
 			// expensive work of uploading a texture to the GPU off the main thread.
 
-			if ( typeof createImageBitmap !== 'undefined' && /Firefox/.test( navigator.userAgent ) === false ) {
+			if ( false && /Firefox/.test( navigator.userAgent ) === false ) {
 
 				this.textureLoader = new THREE.ImageBitmapLoader( this.options.manager );
 
@@ -3746,7 +3746,7 @@ let FLAG=null;
 /* ---------------- models ---------------- */
 const MOD={};
 function loadModels(cb){const B=window.JTM||{},n=Object.keys(B);let left=n.length;if(!left){cb();return;}
- for(const k of n){try{const u=Uint8Array.from(atob(B[k]),c=>c.charCodeAt(0)).buffer;const cib=window.createImageBitmap;try{window.createImageBitmap=undefined;}catch(e){}try{new THREE.GLTFLoader().parse(u,"",g=>{MOD[k]=g.scene;if(--left===0)cb();},e=>{console.error(k,e);if(--left===0)cb();});}finally{try{window.createImageBitmap=cib;}catch(e){}}}catch(e){console.error(e);if(--left===0)cb();}}}
+ for(const k of n){try{const u=Uint8Array.from(atob(B[k]),c=>c.charCodeAt(0)).buffer;const cib=window.createImageBitmap;try{window.createImageBitmap=undefined;}catch(e){}try{new THREE.GLTFLoader().parse(u,"",g=>{MOD[k]=g.scene;if(--left===0)cb();},e=>{console.error(k,e);window.MERR=(window.MERR||"")+k+": "+(e&&e.message||e)+" ";if(--left===0)cb();});}finally{try{window.createImageBitmap=cib;}catch(e){}}}catch(e){console.error(e);if(--left===0)cb();}}}
 const JET=new THREE.Group();scene.add(JET);const SEAT=new THREE.Group();JET.add(SEAT);const rig=new THREE.Group();SEAT.add(rig);rig.add(cam);
 let FLAME=null,FLAME2=null,HULL=null,NAVL=[];const RAILS=[];
 function buildJet(){const o=/nomodel/.test(location.search)?null:MOD.F16;if(o){o.traverse(m=>{if(m.isMesh){const n=(m.name+" "+(m.parent&&m.parent.name)).toLowerCase();if(n.includes("gbu")){m.visible=false;return;}if(m.name==="Korpus_Low_Material001_0_1"){HULL=m;m.visible=false;}if(!m.geometry.attributes.normal)m.geometry.computeVertexNormals();const mt=m.material;const glass=n.includes("kupol");
@@ -3838,8 +3838,7 @@ const FLS=new THREE.Mesh(new THREE.SphereGeometry(.3,12,8),new THREE.MeshBasicMa
 function font(s,w){return `${w||500} ${s}px Rubik, system-ui, sans-serif`;}
 function txt(x,s,X,Y,sz,col,al,wt){x.font=font(sz,wt);x.fillStyle=col||"#fff";x.textAlign=al||"right";x.direction="rtl";x.fillText(s,X,Y);}
 function rrect(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath();}
-let MSG=0;function radio(s){try{const a=ac();if(a){const n=a.createBufferSource();n.buffer=nbuf(.3);const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;f.Q.value=.8;const g=a.createGain();g.gain.setValueAtTime(.18,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.25);n.connect(f);f.connect(g);g.connect(MAS);n.start();n.stop(a.currentTime+.3);}}catch(e){}
- try{if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s.replace(/[–!]/g," "));u.lang="he-IL";const v=speechSynthesis.getVoices().find(v=>/^he|^iw/i.test(v.lang));if(v)u.voice=v;u.rate=1.15;u.pitch=.8;u.volume=.9;setTimeout(()=>speechSynthesis.speak(u),250);}}catch(e){}}
+let MSG=0;function radio(s){try{const a=ac();if(a){const n=a.createBufferSource();n.buffer=nbuf(.3);const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;f.Q.value=.8;const g=a.createGain();g.gain.setValueAtTime(.18,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.25);n.connect(f);f.connect(g);g.connect(MAS);n.start();n.stop(a.currentTime+.3);}}catch(e){}}
 function say(s,t){radio(s);MSG=t||4;const x=MSGC.x;x.clearRect(0,0,1024,160);rrect(x,6,10,1012,140,22);x.fillStyle="rgba(5,10,18,.8)";x.fill();x.strokeStyle="#7fb8ff";x.lineWidth=3;x.stroke();txt(x,s,990,98,44,"#fff","right",700);MSGC.t.needsUpdate=true;MSGM.visible=true;}
 const fmt=s=>`${Math.floor(s/60)}:${(s%60).toFixed(1).padStart(4,"0")}`;
 let AP=0,VIEW=0,LOCK=null,LOCKT=0,RWR=0;
@@ -3862,7 +3861,7 @@ function drawPanel(){const x=PNC.x;PNB=[];x.fillStyle="#141618";x.fillRect(0,0,1
 const MENUC=cvTex(1024,768);const MENU=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.75),new THREE.MeshBasicMaterial({map:MENUC.t,toneMapped:false,depthTest:false,transparent:true}));MENU.renderOrder=40;let BTN=[],HOVER=-1,PAGE="main",RES=null;
 function btn(x,X,Y,W,H,label,fn,on){const i=BTN.length,h=HOVER===i;rrect(x,X,Y,W,H,16);x.fillStyle=on?"#1d4f8f":h?"#24406a":"#101c30";x.fill();x.lineWidth=h?5:2;x.strokeStyle=h?"#9fd0ff":"#2f5a8a";x.stroke();x.font=font(34,700);x.fillStyle="#fff";x.textAlign="center";x.direction="rtl";x.fillText(label,X+W/2,Y+H/2+12);BTN.push({X,Y,W,H,fn});}
 const MODES=[{n:"תקיפה בצפון",d:"משגרים, מכ\"ם ובונקר בהרים. 2 סוללות נ\"מ."},{n:"תקיפה באיראן",d:"מתקן במדבר – רחוק יותר, 3 סוללות נ\"מ."},{n:"מרוץ הקניון",d:"שערים בקניון צר – נגד השעון."},{n:"טיסה חופשית",d:"להמריא ולטוס איפה שרוצים."}];
-function drawMenu(){const x=MENUC.x,W=1024;BTN=[];x.clearRect(0,0,W,768);rrect(x,4,4,W-8,760,26);x.fillStyle="rgba(6,12,24,.95)";x.fill();x.strokeStyle="#4a7ab8";x.lineWidth=4;x.stroke();txt(x,"טייס קרב · רמת דוד",W-40,80,52,"#fff","right",700);
+function drawMenu(){const x=MENUC.x,W=1024;BTN=[];x.clearRect(0,0,W,768);rrect(x,4,4,W-8,760,26);x.fillStyle="rgba(6,12,24,.95)";x.fill();x.strokeStyle="#4a7ab8";x.lineWidth=4;x.stroke();txt(x,"טייס קרב · רמת דוד",W-40,80,52,"#fff","right",700);if(window.MERR)txt(x,"שגיאת דגם: "+String(window.MERR).slice(0,70),W-40,745,20,"#ff7070","right",400);
  if(PAGE==="main"){MODES.forEach((m,i)=>{const X=40+(i%2)*482,Y=120+Math.floor(i/2)*190;btn(x,X,Y,462,170,"",()=>start(i),i<2);txt(x,m.n,X+440,Y+60,40,"#9fd0ff","right",700);txt(x,m.d,X+440,Y+110,24,"#d8e4f4");const b=OPT.best[i];if(b)txt(x,i<2?"★".repeat(b):"שיא "+fmt(b),X+30,Y+150,28,"#ffd84a","left");});
   btn(x,W-360,520,320,90,"איך טסים",()=>{PAGE="help";drawMenu();});btn(x,W-700,520,320,90,OPT.sound?"צליל: פועל":"צליל: כבוי",()=>{OPT.sound^=1;saveOpt();if(MAS)MAS.gain.value=OPT.sound?.8:0;drawMenu();});btn(x,40,520,300,90,"קרדיטים",()=>{PAGE="cred";drawMenu();});
   txt(x,"המשימה והמטרות בדויות. בלי פגיעה באנשים.",W/2,680,24,"#6a7a90","center");}
