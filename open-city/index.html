@@ -31,7 +31,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>עיר פתוחה</h1><p>עיר גדולה שאפשר לנהוג בה בחופשיות. מתיישבים מאחורי ההגה ויוצאים לדרך.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 21:54</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 22:22</p></div>
 <div id="keys" hidden>W/S: גז/בלם · A/D: היגוי · רווח: בלם יד · V: מבט · עכבר (גרירה): הסתכלות · Esc: תפריט</div>
 <script>/**
  * @license
@@ -3688,7 +3688,7 @@ const saveOpt=()=>{try{localStorage.setItem(KEY,JSON.stringify(OPT));}catch(e){}
 const canvas=$("scene"),R=new THREE.WebGLRenderer({canvas,antialias:true});
 R.setPixelRatio(Math.min(devicePixelRatio,2));R.xr.enabled=true;R.xr.setReferenceSpaceType("local-floor");
 R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.0;if(R.xr.setFoveation)R.xr.setFoveation(1);
-const scene=new THREE.Scene();const FOGC=0xbfd2e2;scene.fog=new THREE.Fog(FOGC,140,250);scene.background=new THREE.Color(FOGC);
+const scene=new THREE.Scene();const FOGC=0xbfd2e2;scene.fog=new THREE.Fog(FOGC,160,320);scene.background=new THREE.Color(FOGC);
 const cam=new THREE.PerspectiveCamera(72,1,.05,600);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}addEventListener("resize",resize);resize();
 function cvTex(w,h){const c=document.createElement("canvas");c.width=w;c.height=h;const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return {c,x:c.getContext("2d"),t};}
@@ -3980,7 +3980,7 @@ function buildCity(){ATLAS=makeAtlas();
   const M=new THREE.Matrix4(),q=new THREE.Quaternion(),s=V3(1,1,1),p=V3(),up=V3(0,1,0);K.mats=new Float32Array(K.items.length*16);
   K.items.forEach((it,n)=>{q.setFromAxisAngle(up,it.ry);M.compose(p.set(it.x,it.y,it.z),q,s.set(it.s,it.s,it.s));M.toArray(K.mats,n*16);});
   m.count=0;K.mesh=m;scene.add(m);CITY.list.push(K);}
- const gr=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),lam(0x6f7d5a));gr.rotation.x=-Math.PI/2;gr.position.y=-.05;scene.add(gr);}
+ const gr=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),lam(0x6f7d5a));gr.rotation.x=-Math.PI/2;gr.position.y=-.05;gr.position.x=HALF+2-1500;scene.add(gr);}
 
 // keep only nearby instances (a few times a second, no allocations)
 let cityT=0,cityX=1e9,cityZ=1e9;
@@ -3995,9 +3995,11 @@ function collideCity(x,z,r){HIT.d=0;let bx=x,bz=z;const i0=tileI(x),j0=tileI(z);
  for(let i=i0-1;i<=i0+1;i++)for(let j=j0-1;j<=j0+1;j++){if(i<0||j<0||i>=NT||j>=NT)continue;const t=i*NT+j;
   const L=CBOX[t];if(L)for(const b of L){const qx=clamp(bx,b[0]-b[2],b[0]+b[2]),qz=clamp(bz,b[1]-b[3],b[1]+b[3]);let dx=bx-qx,dz=bz-qz,d=Math.hypot(dx,dz);if(d>=r)continue;if(d<1e-4){dx=bx-b[0];dz=bz-b[1];d=Math.hypot(dx,dz)||1;}const pen=r-d;dx/=d;dz/=d;bx+=dx*pen;bz+=dz*pen;if(pen>HIT.d){HIT.d=pen;HIT.nx=dx;HIT.nz=dz;}}
   const C=CCIR[t];if(C)for(const c of C){let dx=bx-c[0],dz=bz-c[1];const d=Math.hypot(dx,dz),rr=r+c[2];if(d>=rr||d<1e-4)continue;const pen=rr-d;dx/=d;dz/=d;bx+=dx*pen;bz+=dz*pen;if(pen>HIT.d){HIT.d=pen;HIT.nx=dx;HIT.nz=dz;}}}
+ for(const b of XBOX){const qx=clamp(bx,b[0]-b[2],b[0]+b[2]),qz=clamp(bz,b[1]-b[3],b[1]+b[3]);let dx=bx-qx,dz=bz-qz,d=Math.hypot(dx,dz);if(d>=r||d<1e-4)continue;const pen=r-d;dx/=d;dz/=d;bx+=dx*pen;bz+=dz*pen;if(pen>HIT.d){HIT.d=pen;HIT.nx=dx;HIT.nz=dz;}}
+ if(onBridge(bx,bz)||onBridge(x,z)){const zb=tileX(BRZ_K),w=bx>BRX1?44:3.6;if(bz>zb+w){HIT.nx=0;HIT.nz=-1;HIT.d=Math.max(HIT.d,bz-zb-w);bz=zb+w;}if(bz<zb-w){HIT.nx=0;HIT.nz=1;HIT.d=Math.max(HIT.d,zb-w-bz);bz=zb-w;}if(bx>BRX1+68){HIT.nx=-1;HIT.nz=0;HIT.d=Math.max(HIT.d,bx-BRX1-68);bx=BRX1+68;}HIT.x=bx;HIT.z=bz;return HIT;}
  const lim=HALF-6;if(bx<-lim){HIT.nx=1;HIT.nz=0;HIT.d=Math.max(HIT.d,-lim-bx);bx=-lim;}if(bx>lim){HIT.nx=-1;HIT.nz=0;HIT.d=Math.max(HIT.d,bx-lim);bx=lim;}if(bz<-lim){HIT.nx=0;HIT.nz=1;HIT.d=Math.max(HIT.d,-lim-bz);bz=-lim;}if(bz>lim){HIT.nx=0;HIT.nz=-1;HIT.d=Math.max(HIT.d,bz-lim);bz=lim;}
  HIT.x=bx;HIT.z=bz;return HIT;}
-const onRoad=(x,z)=>{const t=tid(x,z);if(t<0)return true;if(KIND[t]!==ROAD)return false;// the 1 m kerb strip of a road tile is sidewalk too
+const onRoad=(x,z)=>{if(x>HALF-6&&onBridge(x,z))return true;const t=tid(x,z);if(t<0)return true;if(KIND[t]!==ROAD)return false;// the 1 m kerb strip of a road tile is sidewalk too
  const i=tileI(x),j=tileI(z),lx=Math.abs(x-tileX(i)),lz=Math.abs(z-tileX(j)),e=T*.385;return isRoadI(i)&&isRoadI(j)?true:isRoadI(i)?lx<e:lz<e;};
 
 /* ================= car: Kenney Car Kit model, cockpit, mirrors, arcade physics (bicycle model) ================= */
@@ -4091,6 +4093,71 @@ function carStep(dt){const D=CAR.def;const fx=Math.sin(CAR.yaw),fz=Math.cos(CAR.
  CARG.position.set(CAR.x,.075,CAR.z);CARG.rotation.y=CAR.yaw;for(const w of WHEELS){w.spin.rotation.x+=CAR.vf*dt/w.r;if(w.front)w.piv.rotation.y=eff;}
  if(SWHEEL)SWHEEL.rotation.z=-CAR.steer*2.2;}
 
+/* ================= stage 2: traffic on the road grid, working traffic lights, harbour + bridge ================= */
+// Roads run along x = tileX(k) (axis 1, "north-south") and z = tileX(k) (axis 0, "east-west") for k % P == 0.
+// A car drives on one road in one direction (lane offset 1.9 m to its right) and decides at every junction.
+const LIGHT={t:0,ns:true,yellow:false};          // ns=true: north-south roads have green
+const TRF=[],NTRF=36,LANE=1.9;
+const BRZ_K=30,BRX0=HALF-T/2,BRX1=HALF+170;      // bridge: east from the road z=tileX(30)
+let TINST=[],TLAMP=null,TLAMP_M=null;
+
+function lightGreen(axis){return LIGHT.yellow?false:(axis===1?LIGHT.ns:!LIGHT.ns);}
+function stepLights(dt){LIGHT.t+=dt;const cyc=LIGHT.t%24;LIGHT.ns=cyc<12;LIGHT.yellow=(cyc>9&&cyc<12)||(cyc>21);}
+
+function spawnCar(c){const ax=rnd()<.5?0:1,k=Math.floor(rnd()*(NB+1))*P,dir=rnd()<.5?1:-1;
+ c.ax=ax;c.k=k;c.dir=dir;c.s=tileX(Math.floor(rnd()*NB)*P+2+Math.floor(rnd()*2));c.v=0;c.vmax=9+rnd()*5;c.turn=0;}
+function buildTraffic(){const kinds=["rcar-sedan"];
+ for(const k of kinds){const P=carParts(k,4.3);TINST.push({k,parts:P.map(p=>{const m=new THREE.InstancedMesh(p.geo,p.mat,NTRF);m.frustumCulled=false;m.count=0;scene.add(m);return m;})});}
+ for(let i=0;i<NTRF;i++){const c={kind:i%kinds.length};spawnCar(c);TRF.push(c);}
+ // light glows: one instanced mesh, coloured per instance (red / yellow / green) every frame
+ const tl=CITY.kinds.tl;if(tl){TLAMP=new THREE.InstancedMesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({toneMapped:false}),tl.items.length);TLAMP.frustumCulled=false;
+  const M=new THREE.Matrix4(),c=new THREE.Color(1,1,1);tl.items.forEach((it,i)=>{const ox=Math.sin(it.ry)*2.66,oz=Math.cos(it.ry)*2.66;M.makeTranslation(it.x+ox,it.y+3.5,it.z+oz);TLAMP.setMatrixAt(i,M);TLAMP.setColorAt(i,c);});scene.add(TLAMP);}
+ buildHarbour();}
+// position of a car (centre of its lane) and heading
+function carPos(c,o){const off=LANE*c.dir;if(c.ax===0){o.x=c.s;o.z=tileX(c.k)+off;o.yaw=c.dir>0?Math.PI/2:-Math.PI/2;}else{o.x=tileX(c.k)-off;o.z=c.s;o.yaw=c.dir>0?0:Math.PI;}return o;}
+const _cp={x:0,z:0,yaw:0},_M=new THREE.Matrix4(),_Q=new THREE.Quaternion(),_S=new THREE.Vector3(1,1,1),_P=new THREE.Vector3(),_UP=new THREE.Vector3(0,1,0);
+function stepTraffic(dt){stepLights(dt);const lim=tileX(NT-1);
+ for(const c of TRF){// next junction ahead (junctions every P tiles)
+  const jIdx=c.dir>0?Math.ceil((c.s+1e-3-tileX(0))/(P*T)):Math.floor((c.s-1e-3-tileX(0))/(P*T)),jS=tileX(0)+jIdx*P*T,dist=(jS-c.s)*c.dir;
+  let want=c.vmax;
+  const stopLine=dist-T/2-1.5;if(!lightGreen(c.ax)&&stopLine>0&&stopLine<12)want=Math.min(want,Math.max(0,stopLine*1.1));
+  // keep distance to the car ahead in the same lane, and to the player
+  for(const o of TRF){if(o===c||o.ax!==c.ax||o.k!==c.k||o.dir!==c.dir)continue;const g=(o.s-c.s)*c.dir;if(g>0&&g<14)want=Math.min(want,Math.max(0,(g-6)*1.2));}
+  carPos(c,_cp);const px=CAR.x-_cp.x,pz=CAR.z-_cp.z,ahead=px*Math.sin(_cp.yaw)+pz*Math.cos(_cp.yaw),side=Math.abs(px*Math.cos(_cp.yaw)-pz*Math.sin(_cp.yaw));if(ahead>0&&ahead<14&&side<2.2)want=Math.min(want,Math.max(0,(ahead-6)*1.2));
+  if(c.siren){}
+  c.v+=clamp(want-c.v,-8*dt,3*dt);c.s+=c.v*c.dir*dt;
+  // at the junction centre: go straight, or turn onto the crossing road
+  const passed=(c.s-jS)*c.dir;if(passed>=0&&passed<c.v*dt+.01&&jIdx>=0&&jIdx<=NB){const r=rnd();if(r<.45){const nk=jIdx*P,ns=tileX(c.k);c.ax^=1;c.k=nk;c.s=ns;c.dir=r<.22?1:-1;}}
+  if(c.s<tileX(0)+2||c.s>lim-2){c.dir*=-1;c.s=clamp(c.s,tileX(0)+2,lim-2);}
+  // the player bumps into traffic: push the player, rumble
+  carPos(c,_cp);const dx=CAR.x-_cp.x,dz=CAR.z-_cp.z,d=Math.hypot(dx,dz);if(d<3.4&&d>.01){const pen=3.4-d,nx=dx/d,nz=dz/d;CAR.x+=nx*pen;CAR.z+=nz*pen;const vn=CAR.vx*nx+CAR.vz*nz;if(vn<0){CAR.vx-=1.4*vn*nx;CAR.vz-=1.4*vn*nz;if(-vn>2.5)onCrash(-vn);}c.v*=.3;}}
+ // draw: only cars within 120 m
+ const n=TINST.map(()=>0);for(const c of TRF){carPos(c,_cp);const dx=_cp.x-CAR.x,dz=_cp.z-CAR.z;if(dx*dx+dz*dz>90*90)continue;const T_=TINST[c.kind];_Q.setFromAxisAngle(_UP,_cp.yaw);_M.compose(_P.set(_cp.x,.05,_cp.z),_Q,_S);for(const m of T_.parts)m.setMatrixAt(n[c.kind],_M);n[c.kind]++;}
+ TINST.forEach((T_,i)=>{for(const m of T_.parts){m.count=n[i];m.instanceMatrix.needsUpdate=true;}});
+ // light colours: parity of the light picks the road it controls
+ if(TLAMP){const tl=CITY.kinds.tl,col=_TC;for(let i=0;i<tl.items.length;i++){const ax=tl.items[i].ry>0?1:0,g=lightGreen(ax);col.setHex(LIGHT.yellow&&(ax===1)===LIGHT.ns?0xffc020:g?0x30ff60:0xff3020);TLAMP.setColorAt(i,col);}TLAMP.instanceColor.needsUpdate=true;}}
+const _TC=new THREE.Color();
+
+/* ---------- harbour on the east edge: water, quay, a bridge to a container pier ---------- */
+function buildHarbour(){const W=new THREE.Mesh(new THREE.PlaneGeometry(900,1400),stdMat({color:0x0c2a3c,roughness:.3,metalness:0,envMapIntensity:.15}));W.rotation.x=-Math.PI/2;W.position.set(HALF+450,-1.2,0);scene.add(W);
+ // quay wall along the city edge
+ const qm=lam(0x8c877d),q=new THREE.Mesh(new THREE.BoxGeometry(2,1.4,NT*T),qm);q.position.set(HALF+1,-.55,0);scene.add(q);
+ // bridge deck + railings + piers
+ const z=tileX(BRZ_K),L=BRX1-BRX0,deck=new THREE.Mesh(new THREE.BoxGeometry(L,.6,10),lam(0x6a6c70));deck.position.set((BRX0+BRX1)/2,-.3,z);scene.add(deck);
+ const ag=new THREE.PlaneGeometry(L,8).rotateX(-Math.PI/2);worldUV(ag,6);const road=new THREE.Mesh(ag,stdMat({map:TEX.ph_asphalt_02_diff||null,color:0x9a9a9a,roughness:.95}));road.position.set((BRX0+BRX1)/2,.01,z);scene.add(road);
+ const rm=lam(0xb8bcc0);for(const s of[-1,1]){const r=new THREE.Mesh(new THREE.BoxGeometry(L,.12,.12),rm);r.position.set((BRX0+BRX1)/2,1.05,z+s*4.8);scene.add(r);const r2=r.clone();r2.position.y=.55;scene.add(r2);}
+ const pg=new THREE.CylinderGeometry(.8,.9,8,12);for(let x=BRX0+25;x<BRX1;x+=35){const p=new THREE.Mesh(pg,qm);p.position.set(x,-4.6,z);scene.add(p);}
+ // container pier at the far end: stacks of real-looking containers (boxes with the wall atlas) + a gantry
+ const pier=new THREE.Mesh(new THREE.BoxGeometry(70,1.6,90),qm);pier.position.set(BRX1+35,-.8,z);scene.add(pier);
+ const cols=[0xb8402e,0x2f5fb0,0x3c7c48,0xe07a2c,0x9aa0a6,0x7c2c32],cg=new THREE.BoxGeometry(12.2,2.6,2.44),cm=stdMat({map:TEX.ph_concrete_wall_008_diff||null,roughness:.6,metalness:.3});
+ const ci=new THREE.InstancedMesh(cg,cm,120);let n=0;const M=new THREE.Matrix4(),c=new THREE.Color();
+ for(let r=0;r<4;r++)for(let k=0;k<10;k++){const h=1+((vh(r,k)*4)|0);for(let l=0;l<h&&n<120;l++){M.makeTranslation(BRX1+12+r*14,1.3+l*2.6,z-30+k*6.5);ci.setMatrixAt(n,M);ci.setColorAt(n,c.setHex(cols[(vh(k,l+r)*6)|0]));n++;}}ci.count=n;scene.add(ci);
+ for(let r=0;r<4;r++)for(let k=0;k<10;k++)addBoxWorld(BRX1+12+r*14,z-30+k*6.5,6.2,1.3);
+ const gm=lam(0xd8a020);for(const s of[-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(1,24,1),gm);leg.position.set(BRX1+62,12,z+s*12);scene.add(leg);}const beam=new THREE.Mesh(new THREE.BoxGeometry(2,2,26),gm);beam.position.set(BRX1+62,24,z);scene.add(beam);}
+// collision boxes outside the tile grid (pier containers)
+const XBOX=[];function addBoxWorld(cx,cz,hx,hz){XBOX.push([cx,cz,hx,hz]);}
+function onBridge(x,z){return x>BRX0-2&&x<BRX1+70&&Math.abs(z-tileX(BRZ_K))<(x>BRX1?45:4.2);}
+
 /* ================= game: input (VR + desktop), comfort vignette, menu, loop ================= */
 const rig=new THREE.Group();rig.add(cam);
 let VIEW=0,calib=0;const KEYS={};
@@ -4165,7 +4232,7 @@ function fpsUpdate(dt){FPSM.visible=!!OPT.fps;if(!OPT.fps)return;fpsN++;fpsT+=dt
 /* ---------- main loop ---------- */
 let last=performance.now(),dashT=0,mirT=0;
 function frame(){const now=performance.now();let dt=Math.min(.05,(now-last)/1000);last=now;if(window.__DT)dt=window.__DT;
- readInput(dt);carStep(dt);
+ readInput(dt);carStep(dt);stepTraffic(dt);
  // curb bumps
  if(CAR.off&&Math.abs(CAR.vf)>3){curbT-=dt;if(curbT<=0){buzz(-1,.18,35);curbT=.22;}}
  engineSound(CAR.rpm,IN.thr,CAR.slip);
@@ -4191,7 +4258,7 @@ async function enterVR(){try{const s=await navigator.xr.requestSession("immersiv
  try{if(s.updateTargetFrameRate&&s.supportedFrameRates&&Array.from(s.supportedFrameRates).includes(90))s.updateTargetFrameRate(90);}catch(e){}
  s.addEventListener("end",()=>{$("start").hidden=false;});begin();calib=1;}catch(e){$("msg").textContent="לא ניתן להיכנס למשקף: "+e.message;}}
 (async()=>{try{if(document.fonts)await Promise.race([document.fonts.load("700 40px Rubik"),new Promise(r=>setTimeout(r,1500))]);}catch(e){}
- makeEnv();loadModels(async()=>{try{realSky();}catch(e){console.error(e);}try{buildCity();}catch(e){console.error(e);}try{buildCar();}catch(e){console.error(e);}
+ makeEnv();loadModels(async()=>{try{realSky();}catch(e){console.error(e);}try{buildCity();}catch(e){console.error(e);}try{buildCar();}catch(e){console.error(e);}try{buildTraffic();}catch(e){console.error(e);}
   WREF=new THREE.Object3D();WREF.position.copy(SWHEEL.position);WREF.rotation.copy(SWHEEL.rotation);INTR.add(WREF);
   // start on a road near the centre, in the right-hand lane
   CAR.x=tileX(30)-1.9;CAR.z=tileX(27);CAR.yaw=0;carStep(0);updateCity(CAR.x,CAR.z,0,1,true);
