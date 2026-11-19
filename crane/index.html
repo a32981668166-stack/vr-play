@@ -31,7 +31,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>מנוף נמל</h1><p>יושבים בתא של מנוף ענק בנמל, מסובבים את הזרוע, מורידים את הוו ומעבירים מכולות לאונייה – בעדינות ובדיוק.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 17:29</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 17:39</p></div>
 <div id="keys" hidden>A/D: סיבוב המנוף · W/S: עגלה קדימה/אחורה · חץ למעלה/למטה (או R/F): הרמה/הורדה · Z/X: סיבוב המטען · רווח: תפוס/שחרר · V: מבט · Esc: תפריט · גרירת עכבר: הסתכלות</div>
 <script>/**
  * @license
@@ -3804,7 +3804,8 @@ function buildCab(){const o=MOD.CAB;const EX=V3(-1.62,7.15,-1.1);
   const mesh=new THREE.Mesh(g,mt);
   if(/^boom_controller_[12]/.test(m.name)){g.computeBoundingBox();const b=g.boundingBox,pv=V3((b.min.x+b.max.x)/2,b.min.y,(b.min.z+b.max.z)/2);g.translate(-pv.x,-pv.y,-pv.z);const piv=new THREE.Group();piv.position.copy(pv);piv.add(mesh);piv.userData.top=b.max.y-b.min.y;CAB.add(piv);(/_1/.test(m.name)?JL:JR).push(piv);}
   else CAB.add(mesh);}}
-let GUIDE,GDOT,CAB,DASH,HCRT,HCAM;const JL=[],JR=[];
+let GUIDE,GDOT,CAB,DASH,HCRT,HCAM,ARROW=null;
+function nextPick(){if(!G||G.done||CR.hold)return null;const open=openSlots();if(!open.length)return null;let best=null,bd=1e9;for(const b of BOXES){if(b.deco||b.placed)continue;const top=b.y+BOX.H;if(BOXES.some(o=>o!==b&&Math.abs(o.y-top)<.3&&overlap(corners(o.x,o.z,o.yaw,BOX.L,BOX.W),corners(b.x,b.z,b.yaw,BOX.L,BOX.W))))continue;const d=Math.abs(angN(Math.atan2(-b.z,b.x)-CR.th));if(d<bd){bd=d;best=b;}}return best;}const JL=[],JR=[];
 
 /* ---------------- containers ---------------- */
 let BOXP=null;const BOXES=[];const TINTS={blue:null,red:[.78,.18,.14],green:[.18,.5,.24],orange:[.92,.48,.1],gray:[.62,.64,.66],white:[.92,.92,.9],teal:[.12,.5,.55],maroon:[.48,.12,.16]};const TINTN={blue:"כחולה",red:"אדומה",green:"ירוקה",orange:"כתומה",gray:"אפורה",white:"לבנה",teal:"טורקיז",maroon:"בורדו"};
@@ -3864,7 +3865,7 @@ function truck(x,z,yaw){let g;if(TRP)g=TRP.flat.clone();else{g=new THREE.Group()
  g.position.set(x,0,z);g.rotation.y=yaw||0;scene.add(g);TRUCKS.push({g,x,z,yaw:yaw||0});}
 function parkedTrucks(){if(!TRP)return;for(const [x,z,ry] of[[-30,40,Math.PI/2],[-30,30,Math.PI/2],[-14,-50,0],[-40,-35,.3]]){const g=TRP.full.clone();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);}}
 function clearMission(){for(const b of BOXES)scene.remove(b.m);BOXES.length=0;for(const s of SLOTS)scene.remove(s.g);SLOTS.length=0;for(const t of TRUCKS)scene.remove(t.g);TRUCKS.length=0;CR.hold=null;}
-function start(i){clearMission();shipCargo();MISS[i].setup();showSlots();G={i,t:0,bumps:0,done:false,wind:!!MISS[i].wind||OPT.diff===2};CR.th=-.35;CR.r=16;CR.L=30;CR.psi=0;CR.vth=CR.vr=CR.vL=CR.vpsi=0;CR.sx=CR.sz=CR.svx=CR.svz=0;
+function start(i){clearMission();shipCargo();MISS[i].setup();showSlots();G={i,t:0,bumps:0,done:false,wind:!!MISS[i].wind||OPT.diff===2};{const b=BOXES.find(b=>!b.deco);if(b){CR.th=Math.atan2(-b.z,b.x)+.25;CR.r=clamp(Math.hypot(b.x,b.z),TRMIN+1,TRMAX);}else{CR.th=-.35;CR.r=16;}}CR.L=30;CR.psi=0;CR.vth=CR.vr=CR.vL=CR.vpsi=0;CR.sx=CR.sz=CR.svx=CR.svz=0;
  hideMenu();say(MISS[i].d+"  רווח / הדק ימני = תפוס",6);ac();}
 const DIF=()=>[{tol:1.6,yaw:.6,sway:.45,spd:.75},{tol:.9,yaw:.22,sway:1,spd:1},{tol:.55,yaw:.12,sway:1.25,spd:1.1}][OPT.diff];
 function curSlot(){return SLOTS.find(s=>!s.done);}
@@ -3887,7 +3888,7 @@ let prevT=null;
 function sim(dt){const D=DIF(),sp=D.spd;
  // smooth motors
  const acc=(v,want,a)=>v+clamp(want-v,-a*dt,a*dt);
- CR.vth=acc(CR.vth,IN.sl*.16*sp,.2);CR.vr=acc(CR.vr,IN.tr*3.2*sp,3.5);CR.vL=acc(CR.vL,-IN.ho*3.5*sp,5);CR.vpsi=acc(CR.vpsi,IN.rot*.6,1.2);
+ CR.vth=acc(CR.vth,IN.sl*.3*sp,.3);CR.vr=acc(CR.vr,IN.tr*3.2*sp,3.5);CR.vL=acc(CR.vL,-IN.ho*3.5*sp,5);CR.vpsi=acc(CR.vpsi,IN.rot*.6,1.2);
  const old={th:CR.th,r:CR.r,L:CR.L,psi:CR.psi};
  CR.th=angN(CR.th+CR.vth*dt);CR.r=clamp(CR.r+CR.vr*dt,TRMIN,TRMAX);if(CR.r===TRMIN||CR.r===TRMAX)CR.vr=0;CR.psi=angN(CR.psi+CR.vpsi*dt);
  CR.L=clamp(CR.L+CR.vL*dt,2.5,JIBY+6);if(CR.L===2.5)CR.vL=Math.max(0,CR.vL);
@@ -3911,6 +3912,9 @@ function sim(dt){const D=DIF(),sp=D.spd;
  SLEW.position.set(0,0,0);SLEW.rotation.y=CR.th;TROL.position.x=CR.r;if(FLOOD[0]){const t=trolleyPos();FLOOD[0].l.position.set(t.x,JIBY-1,t.z);FLOOD[0].t.position.set(t.x+CR.sx,0,t.z+CR.sz);}hp=hookPos();HOOK.position.copy(hp);HOOK.rotation.y=loadYaw();
  const rp=ROPE.geometry.attributes.position.array,tt=trolleyPos(),ya=loadYaw(),cy=Math.cos(ya),sy=Math.sin(ya),ct=Math.cos(CR.th),st=Math.sin(CR.th);let q=0;for(const a of[-.17,-.06,.06,.17]){const hx=hp.x+cy*a,hz=hp.z-sy*a,tx=tt.x+ct*a*1.6,tz=tt.z-st*a*1.6;rp[q++]=tx;rp[q++]=JIBY-.45;rp[q++]=tz;rp[q++]=hx;rp[q++]=hp.y+ROPEY;rp[q++]=hz;}ROPE.geometry.attributes.position.needsUpdate=true;
  if(h){SLING.visible=true;const c=corners(h.x,h.z,h.yaw,BOX.L-.3,BOX.W-.2),a=SLING.geometry.attributes.position.array;for(let i=0;i<4;i++){a.set([hp.x,hp.y,hp.z,c[i][0],h.y+BOX.H,c[i][1]],i*6);}SLING.geometry.attributes.position.needsUpdate=true;}else SLING.visible=false;
+ // arrow over the next container to pick
+ if(!ARROW){ARROW=new THREE.Group();const c=new THREE.Mesh(new THREE.ConeGeometry(.9,1.8,16),new THREE.MeshBasicMaterial({color:0xffd020}));c.rotation.x=Math.PI;ARROW.add(c);const st=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,1.6,10),new THREE.MeshBasicMaterial({color:0xffd020}));st.position.y=1.6;ARROW.add(st);scene.add(ARROW);}
+ {const nb=OPT.guide!==0?nextPick():null;ARROW.visible=!!nb;if(nb){ARROW.position.set(nb.x,nb.y+BOX.H+2.6+Math.sin(performance.now()/250)*.4,nb.z);}}
  // guide line
  const showG=OPT.diff<2&&OPT.guide!==0;const gy=h?h.y:hp.y-HOOKH;const gs=h?supportUnder(h.x,h.z,h.yaw,BOX.L,BOX.W,h):supportUnder(hp.x,hp.z,0,.8,.8,null);const gfl=gs<=-90?SEA:gs;
  GUIDE.visible=GDOT.visible=showG&&gy-gfl>.3;GUIDE.scale.y=Math.max(.01,gy-gfl);GUIDE.position.set(hp.x,(gy+gfl)/2,hp.z);GDOT.position.set(hp.x,gfl+.04,hp.z);
@@ -3958,7 +3962,7 @@ function drawDash(){const x=DASH.x,W=1024,H=512;x.fillStyle="#0c1218";x.fillRect
  if(!G){txt(x,"בחר משימה בתפריט",W-30,90,46,"#ffd070","right",700);return void(DASH.t.needsUpdate=true);}
  const m=MISS[G.i],done=SLOTS.filter(s=>s.done).length;txt(x,m.n,W-30,70,48,"#ffd070","right",700);txt(x,`${done} / ${SLOTS.length}`,40,70,48,"#fff","left",700);
  const hp=hookPos();const h=CR.hold;const gy=h?h.y:hp.y-HOOKH;const sup=h?supportUnder(h.x,h.z,h.yaw,BOX.L,BOX.W,h):supportUnder(hp.x,hp.z,0,.8,.8,null);
- const rows=[["זמן",fmt(G.t)],["גובה מעל המשטח",(gy-(sup<=-90?SEA:sup)).toFixed(1)+" מ'"],["מרחק עגלה",CR.r.toFixed(1)+" מ'"],["מטען",h?"מכולה "+TINTN[h.col]+(h.landed?" (נוגעת)":""):"אין"],["רוח",G.wind?"חזקה":"חלשה"]];
+ const rows=[["זמן",fmt(G.t)],["גובה מעל המשטח",(gy-(sup<=-90?SEA:sup)).toFixed(1)+" מ'"],["מרחק עגלה",CR.r.toFixed(1)+" מ'"],["מטען",h?"מכולה "+TINTN[h.col]+(h.landed?" (נוגעת)":""):"אין"],["רוח",G.wind?"חזקה":"חלשה"]];{const nb=nextPick();let tgt=nb?V3(nb.x,0,nb.z):null;if(CR.hold){const o=openSlots()[0];if(o)tgt=V3(o.x,0,o.z);}if(tgt){const da=angN(Math.atan2(-tgt.z,tgt.x)-CR.th),dr=Math.hypot(tgt.x,tgt.z)-CR.r;rows[4]=["כיוון",Math.abs(da)>.06?(da>0?"◀ סובב שמאלה (A)":"סובב ימינה (D) ▶"):Math.abs(dr)>.6?(dr>0?"עגלה קדימה (W)":"עגלה אחורה (S)"):"מעל המטרה – הורד"];}}
  rows.forEach((r,i)=>{txt(x,r[0],W-30,150+i*70,36,"#9fb4c8","right",500);txt(x,r[1],40,150+i*70,40,"#fff","left",700);});
  const sw=Math.hypot(CR.sx,CR.sz);x.fillStyle=sw>1?"#ff5040":sw>.4?"#ffc040":"#40ff70";x.fillRect(40,H-34,Math.min(944,sw*300),14);txt(x,"נדנוד",W-30,H-20,24,"#9fb4c8","right",500);DASH.t.needsUpdate=true;}
 
@@ -3972,7 +3976,7 @@ function startMotor(){const a=AC;// electric winch hum + gearbox whine + wind
  const o2=a.createOscillator();o2.type="sine";o2.frequency.value=420;const g2=a.createGain();g2.gain.value=0;o2.connect(g2);g2.connect(MAS);o2.start();
  const n=a.createBufferSource();n.buffer=nbuf(3,true);n.loop=true;const nf=a.createBiquadFilter();nf.type="lowpass";nf.frequency.value=700;const ng=a.createGain();ng.gain.value=.08;n.connect(nf);nf.connect(ng);ng.connect(MAS);n.start();MOT={o,g,o2,g2,ng};}
 function horn(){const a=ac();if(!a)return;const t=a.currentTime;for(const f of[311,392]){const o=a.createOscillator();o.type="sawtooth";o.frequency.value=f;const lp=a.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1400;const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.04);g.gain.setValueAtTime(.12,t+.9);g.gain.linearRampToValueAtTime(0,t+1.05);o.connect(lp);lp.connect(g);g.connect(MAS);o.start(t);o.stop(t+1.1);}}
-function sound(){if(!MOT)return;const m=Math.abs(CR.vth)/.16+Math.abs(CR.vr)/3.2+Math.abs(CR.vL)/3.5;const t=AC.currentTime;MOT.g.gain.setTargetAtTime(Math.min(.22,m*.12),t,.08);MOT.o.frequency.setTargetAtTime(60+m*40,t,.1);MOT.g2.gain.setTargetAtTime(Math.min(.03,m*.015),t,.1);MOT.o2.frequency.setTargetAtTime(380+m*160,t,.1);MOT.ng.gain.setTargetAtTime(G&&G.wind?.22:.08,t,.5);}
+function sound(){if(!MOT)return;const m=Math.abs(CR.vth)/.3+Math.abs(CR.vr)/3.2+Math.abs(CR.vL)/3.5;const t=AC.currentTime;MOT.g.gain.setTargetAtTime(Math.min(.22,m*.12),t,.08);MOT.o.frequency.setTargetAtTime(60+m*40,t,.1);MOT.g2.gain.setTargetAtTime(Math.min(.03,m*.015),t,.1);MOT.o2.frequency.setTargetAtTime(380+m*160,t,.1);MOT.ng.gain.setTargetAtTime(G&&G.wind?.22:.08,t,.5);}
 
 /* ---------------- input ---------------- */
 let VIEW=0;
