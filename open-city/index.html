@@ -31,7 +31,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#000;color:#eef2f6;fon
 <body>
 <canvas id="scene"></canvas>
 <div id="start"><h1>עיר פתוחה</h1><p>עיר גדולה שאפשר לנהוג בה בחופשיות. מתיישבים מאחורי ההגה ויוצאים לדרך.</p>
-<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 21:43</p></div>
+<button id="vrBtn" disabled>טוען…</button><button id="pcBtn" disabled>שחק במחשב</button><p id="msg" style="font-size:.85rem"></p><p style="font-size:.8rem;color:#6a7a90">גרסה 19.11 21:45</p></div>
 <div id="keys" hidden>W/S: גז/בלם · A/D: היגוי · רווח: בלם יד · V: מבט · עכבר (גרירה): הסתכלות · Esc: תפריט</div>
 <script>/**
  * @license
@@ -3879,7 +3879,7 @@ function carParts(k,len){if(CPARTS[k])return CPARTS[k];const o=MOD[k];if(!o)retu
  return CPARTS[k]=out;}
 function parkCar(k,x,z,ry,y){const P=carParts(k,4.3);P.forEach((p,i)=>addInst(k+"#"+i,p.geo,p.mat,x,z,ry,y));}
 /* ---------- instancing helpers ---------- */
-function addInst(kind,geo,mat,x,z,ry,y,sx){let K=CITY.kinds[kind];if(!K){if(!geo)return;K=CITY.kinds[kind]={geo,mat,items:[],dmin:0,dmax:0};if(/^r?car-/.test(kind))K.dmax=80;if(/^b\d/.test(kind))K.dmax=75;if(/^bl\d/.test(kind))K.dmin=75;if(/^(house-|tree-)/.test(kind))K.dmax=170;}K.items.push({x,z,ry,y:y||0,s:sx||1});}
+function addInst(kind,geo,mat,x,z,ry,y,sx){let K=CITY.kinds[kind];if(!K){if(!geo)return;K=CITY.kinds[kind]={geo,mat,items:[],dmin:0,dmax:0};if(/^r?car-/.test(kind))K.dmax=45;if(/^b\d/.test(kind))K.dmax=75;if(/^bl\d/.test(kind))K.dmin=75;if(/^(house-|tree-)/.test(kind))K.dmax=170;}K.items.push({x,z,ry,y:y||0,s:sx||1});}
 const PALOF=k=>/^car-/.test(k)?"carkit_palette":/^(house-|tree-|planter)/.test(k)?"suburb_palette":"city_palette";
 const PMAT={};const palMat=k=>{const p=PALOF(k);return PMAT[p]||(PMAT[p]=new THREE.MeshLambertMaterial({map:palTex(p),vertexColors:true}));};
 function kGeo(k,sx,sy,sz,ao){const g=modelGeo(k,sx,sy,sz);if(!g)return null;const P=g.attributes.position,c=new Float32Array(P.count*3);for(let i=0;i<P.count;i++){const a=ao?AO(P.getY(i)):1;c[i*3]=c[i*3+1]=c[i*3+2]=a;}g.setAttribute("color",new THREE.BufferAttribute(c,3));return g;}
@@ -3893,7 +3893,7 @@ function buildCity(){ATLAS=makeAtlas();
  const fmat=new THREE.MeshLambertMaterial({vertexColors:true,map:ATLAS});
  const shM=new THREE.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,toneMapped:false});
  const carShG=new THREE.PlaneGeometry(2.6,5.2).rotateX(-Math.PI/2),bShG=new THREE.PlaneGeometry(12,10).rotateX(-Math.PI/2);
- const CARS=["rcar-megane","rcar-taxi","rcar-sedan","rcar-peugeot","rcar-megane"];
+ const CARS=["rcar-sedan","rcar-taxi","rcar-sedan","rcar-megane","rcar-sedan"];
  const centre=(NB-1)/2;const walk=[];   // sidewalk band quads
  for(let i=0;i<NT;i++)for(let j=0;j<NT;j++){const x=tileX(i),z=tileX(j),idx=i*NT+j,ri=isRoadI(i),rj=isRoadI(j);
   if(ri||rj){KIND[idx]=ROAD;
