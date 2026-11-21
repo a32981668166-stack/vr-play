@@ -1,6 +1,6 @@
 {
- "name": "Roller Coaster",
- "short_name": "Roller Coaster",
+ "name": "רכבות הרים",
+ "short_name": "רכבות הרים",
  "description": "רכבות הרים",
  "start_url": "./",
  "scope": "./",
@@ -18,5 +18,7 @@
    "sizes": "512x512",
    "type": "image/png"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

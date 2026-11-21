@@ -1,6 +1,6 @@
 {
- "name": "Command Bunker",
- "short_name": "Command Bunker",
+ "name": "חמ\"ל",
+ "short_name": "חמ\"ל",
  "description": "חמ\"ל",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

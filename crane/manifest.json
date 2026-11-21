@@ -1,6 +1,6 @@
 {
- "name": "Port Crane",
- "short_name": "Port Crane",
+ "name": "מנוף נמל",
+ "short_name": "מנוף נמל",
  "description": "מנוף נמל",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

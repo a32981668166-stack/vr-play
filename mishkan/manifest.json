@@ -1,6 +1,6 @@
 {
- "name": "Mishkan VR",
- "short_name": "Mishkan VR",
+ "name": "המשכן",
+ "short_name": "המשכן",
  "description": "המשכן",
  "start_url": "./",
  "scope": "./",
@@ -18,5 +18,7 @@
    "sizes": "512x512",
    "type": "image/png"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

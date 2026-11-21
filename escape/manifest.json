@@ -1,6 +1,6 @@
 {
- "name": "Escape Rooms",
- "short_name": "Escape Rooms",
+ "name": "חדר בריחה",
+ "short_name": "חדר בריחה",
  "description": "מקלט 13",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

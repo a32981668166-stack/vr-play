@@ -1,6 +1,6 @@
 {
- "name": "Bomb Defuse",
- "short_name": "Bomb Defuse",
+ "name": "פירוק פצצה",
+ "short_name": "פירוק פצצה",
  "description": "פצצה",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

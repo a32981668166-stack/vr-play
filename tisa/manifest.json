@@ -1,6 +1,6 @@
 {
- "name": "Free Flight",
- "short_name": "Free Flight",
+ "name": "טיסה חופשית",
+ "short_name": "טיסה חופשית",
  "description": "טיסה חופשית",
  "start_url": "./",
  "scope": "./",
@@ -18,5 +18,7 @@
    "sizes": "512x512",
    "type": "image/png"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

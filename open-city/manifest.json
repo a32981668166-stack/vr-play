@@ -1,6 +1,6 @@
 {
- "name": "Open City",
- "short_name": "Open City",
+ "name": "עיר פתוחה",
+ "short_name": "עיר פתוחה",
  "description": "עיר פתוחה",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

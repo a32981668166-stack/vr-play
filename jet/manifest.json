@@ -1,6 +1,6 @@
 {
- "name": "Jet Pilot",
- "short_name": "Jet Pilot",
+ "name": "טייס קרב",
+ "short_name": "טייס קרב",
  "description": "טייס קרב",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

@@ -1,6 +1,6 @@
 {
- "name": "Fire Copter",
- "short_name": "Fire Copter",
+ "name": "כבאי מסוק",
+ "short_name": "כבאי מסוק",
  "description": "כבאי מסוק",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }

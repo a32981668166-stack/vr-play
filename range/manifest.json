@@ -1,6 +1,6 @@
 {
- "name": "Shooting Range",
- "short_name": "Shooting Range",
+ "name": "מטווח",
+ "short_name": "מטווח",
  "description": "מטווח",
  "start_url": "./",
  "scope": "./",
@@ -20,5 +20,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "he",
+ "dir": "rtl"
 }
