@@ -4583,9 +4583,10 @@ const mishkan=new THREE.Group();scene.add(mishkan);
   for(const s of[-1,1]){const x=A(s*6.05);bar(A(30),x,A(5)+.18,A(-15),false);for(const y of[2.5,7.5])for(const zc of[-22.5,-7.5])bar(A(15),x,A(y)+.18,A(zc),false);}
   const zw=A(-31.05);bar(A(12),0,A(5)+.18,zw,true);for(const y of[2.5,7.5])for(const xc of[-3,3])bar(A(6),A(xc),A(y)+.18,zw,true);
   // top joints: neighbouring boards notched at the top and set into one gold ring (Rashi on Shemot 26:24)
-  {const jr=new THREE.TorusGeometry(1,.1,8,24).rotateX(Math.PI/2),J=[];for(const s of[-1,1])for(let i=1;i<20;i++)J.push([A(s*5.5),A(-30+1.5*i),0]);for(let i=1;i<8;i++)J.push([A(-6+1.5*i),A(-30.5),Math.PI/2]);
+  {const hx=kt/2+.03,hz=.13,w=.025,sh=new THREE.Shape([new THREE.Vector2(-hx,-hz),new THREE.Vector2(hx,-hz),new THREE.Vector2(hx,hz),new THREE.Vector2(-hx,hz)]);sh.holes.push(new THREE.Path([new THREE.Vector2(-hx+w,-hz+w),new THREE.Vector2(-hx+w,hz-w),new THREE.Vector2(hx-w,hz-w),new THREE.Vector2(hx-w,-hz+w)]));
+   const jr=new THREE.ExtrudeGeometry(sh,{depth:.08,bevelEnabled:false}).rotateX(Math.PI/2),J=[];for(const s of[-1,1])for(let i=1;i<20;i++)J.push([A(s*5.5),A(-30+1.5*i),0]);for(let i=1;i<8;i++)J.push([A(-6+1.5*i),A(-30.5),Math.PI/2]);
    const jm=new THREE.InstancedMesh(jr,MAT.gold,J.length),m4=new THREE.Matrix4(),q=new THREE.Quaternion(),one=new THREE.Vector3(1,.6,1),p=new THREE.Vector3(),e=new THREE.Euler();
-   one.set(kt/2+.04,.35,.14);J.forEach(([x,z,ry],i)=>{q.setFromEuler(e.set(0,ry,0));m4.compose(p.set(x,kh+.18-.15,z),q,one);jm.setMatrixAt(i,m4);});mishkan.add(jm);}
+   one.set(1,1,1);J.forEach(([x,z,ry],i)=>{q.setFromEuler(e.set(0,ry,0));m4.compose(p.set(x,kh+.18-.08,z),q,one);jm.setMatrixAt(i,m4);});mishkan.add(jm);}
   // gold rings on the boards, holding the upper and lower bars (Shemot 26:29 "ואת טבעתיהם תעשה זהב בתים לבריחם")
   {const ringG=new THREE.TorusGeometry(.065,.014,8,20),R=[],m4=new THREE.Matrix4(),q=new THREE.Quaternion(),one=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
    for(const s of[-1,1])for(let i=0;i<20;i++)for(const y of[2.5,7.5])R.push([A(s*6.05),A(y)+.18,A(-30+1.5*i+.75),0]);
