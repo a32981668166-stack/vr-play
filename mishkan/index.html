@@ -4582,6 +4582,10 @@ const mishkan=new THREE.Group();scene.add(mishkan);
  {const bar=(len,x,y,z,alongX)=>{const b=add(C(.045,.045,len-.04,10),MAT.gold,x,y,z,mishkan);if(alongX)b.rotation.z=Math.PI/2;else b.rotation.x=Math.PI/2;};
   for(const s of[-1,1]){const x=A(s*6.05);bar(A(30),x,A(5)+.18,A(-15),false);for(const y of[2.5,7.5])for(const zc of[-22.5,-7.5])bar(A(15),x,A(y)+.18,A(zc),false);}
   const zw=A(-31.05);bar(A(12),0,A(5)+.18,zw,true);for(const y of[2.5,7.5])for(const xc of[-3,3])bar(A(6),A(xc),A(y)+.18,zw,true);
+  // top joints: neighbouring boards notched at the top and set into one gold ring (Rashi on Shemot 26:24)
+  {const jr=new THREE.TorusGeometry(1,.1,8,24).rotateX(Math.PI/2),J=[];for(const s of[-1,1])for(let i=1;i<20;i++)J.push([A(s*5.5),A(-30+1.5*i),0]);for(let i=1;i<8;i++)J.push([A(-6+1.5*i),A(-30.5),Math.PI/2]);
+   const jm=new THREE.InstancedMesh(jr,MAT.gold,J.length),m4=new THREE.Matrix4(),q=new THREE.Quaternion(),one=new THREE.Vector3(1,.6,1),p=new THREE.Vector3(),e=new THREE.Euler();
+   one.set(kt/2+.04,.35,.14);J.forEach(([x,z,ry],i)=>{q.setFromEuler(e.set(0,ry,0));m4.compose(p.set(x,kh+.18-.15,z),q,one);jm.setMatrixAt(i,m4);});mishkan.add(jm);}
   // gold rings on the boards, holding the upper and lower bars (Shemot 26:29 "ואת טבעתיהם תעשה זהב בתים לבריחם")
   {const ringG=new THREE.TorusGeometry(.065,.014,8,20),R=[],m4=new THREE.Matrix4(),q=new THREE.Quaternion(),one=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
    for(const s of[-1,1])for(let i=0;i<20;i++)for(const y of[2.5,7.5])R.push([A(s*6.05),A(y)+.18,A(-30+1.5*i+.75),0]);
@@ -4595,11 +4599,11 @@ const mishkan=new THREE.Group();scene.add(mishkan);
  const back=add(folds(A(13),top-drop,.03,.9,2.5),coverBack,0,(top+drop)/2,A(-31.3),mishkan);
  const ceil=add(new THREE.PlaneGeometry(A(10),A(30)),MAT.ceiling,0,kh+.16,A(-15),mishkan,false);ceil.rotation.x=Math.PI/2;
  // entrance screen on five pillars (Shemot 26:36-37), drawn aside
- for(let i=0;i<5;i++){const x=-5+i*2.5;add(C(.07,.07,kh,12),MAT.gold,A(x),kh/2+.18,A(0),mishkan);add(B(.24,.18,.24),MAT.copper,A(x),.09,A(0),mishkan);}
+ const hookG=new THREE.TorusGeometry(.05,.012,8,16,Math.PI*1.3);for(let i=0;i<5;i++){const x=-5+i*2.5;add(B(.2,kh,.2),MAT.gold,A(x),kh/2+.18,A(0),mishkan);add(B(.3,.2,.3),MAT.copper,A(x),.1,A(0),mishkan);const h=add(hookG,MAT.gold,A(x),kh+.06,A(0)+.11,mishkan);h.rotation.z=Math.PI*.85;}
  for(const s of[-1,1]){const c=add(folds(A(3),kh-.1,.06,.28,.4),MAT.gate,A(s*3.4),kh/2+.2,A(.05),mishkan);}
  const rail=add(C(.03,.03,A(10),8),MAT.gold,0,kh+.12,A(0),mishkan);rail.rotation.z=Math.PI/2;
  // the parochet on four pillars (Shemot 26:31-33)
- for(let i=0;i<4;i++){const x=-3.75+i*2.5;add(C(.07,.07,kh,12),MAT.gold,A(x),kh/2+.18,A(-20),mishkan);add(B(.24,.18,.24),MAT.silverIn,A(x),.09,A(-20),mishkan);}
+ for(let i=0;i<4;i++){const x=-3.75+i*2.5;add(B(.2,kh,.2),MAT.gold,A(x),kh/2+.18,A(-20),mishkan);add(B(.3,.2,.3),MAT.silverIn,A(x),.1,A(-20),mishkan);const h=add(hookG,MAT.gold,A(x),kh+.06,A(-20)+.11,mishkan);h.rotation.z=Math.PI*.85;}
  window.__veil=add(folds(A(10),kh-.05,.03,.6,.5),MAT.veil,0,kh/2+.18,A(-20.05),mishkan,false);
  wall(-6,-5,-31,0);wall(5,6,-31,0);wall(-6,6,-31,-30);}
 
@@ -4736,7 +4740,7 @@ sign(["קרשי המשכן","עשר אמות אורך, אמה וחצי רוחב"
 // table (Shemot 25:23-30) on the north, with the showbread (Vayikra 24:5-6): two stacks of six loaves.
 // Each loaf is an open box (תיבה פרוצה): a base and two upright sides. Golden tubes lie between the loaves and
 // four golden posts beside the table hold the tube ends (Menachot, perek Shtei Halechem).
-{const g=new THREE.Group();g.position.set(A(2.6),0,A(-14));scene.add(g);
+{const g=new THREE.Group();g.position.set(A(-2.6),0,A(-14));scene.add(g);
  const G=MAT.gold,TW=A(1),TL=A(2),TH=A(1.5);
  add(B(TW,.04,TL),G,0,TH-.02,0,g);
  for(const s of[-1,1]){add(B(.022,.035,TL+.022),G,s*(TW/2),TH+.012,0,g);add(B(TW+.022,.035,.022),G,0,TH+.012,s*(TL/2),g);}
@@ -4760,13 +4764,13 @@ sign(["קרשי המשכן","עשר אמות אורך, אמה וחצי רוחב"
      if(k>0){const zs=k===5?[-.09,.09]:[-.13,0,.13];for(const dz of zs)add(tubeG,G,0,y-TR,zc+dz,g);}}
    for(const sx of[-1,1]){add(B(.024,stackTop,.024),G,sx*PX,stackTop/2,zc,g);add(B(.06,.02,.06),G,sx*PX,.01,zc,g);
      for(let k=1;k<6;k++){const y=TH+.004+k*PITCH-TR;add(B(.016,.016,.34),G,sx*(PX-.01),y-TR-.004,zc,g);}}}
- wall(1.85,3.35,-15.25,-12.75);sign(["השולחן ולחם הפנים","שתים מערכות, שש המערכת","ויקרא כד, ו"],A(2.6),2.15,A(-14)+1.05);}
+ wall(-3.35,-1.85,-15.25,-12.75);sign(["השולחן ולחם הפנים","שתים מערכות, שש המערכת","ויקרא כד, ו"],A(-2.6),2.15,A(-14)+1.05);}
 // menorah (Shemot 25:31-40) on the south. Heights by handbreadths as in Menachot 28b (18 in all):
 // feet and flower 3, smooth 2, goblet-knob-flower 1, smooth 2, knob + two branches 1, smooth 1, knob + branches 1,
 // smooth 1, knob + branches 1, smooth 2, and three goblets, a knob and a flower in the last 3.
 // 22 goblets, 11 knobs, 9 flowers. Branches drawn rounded; seven lamps on top, all one beaten piece of gold.
 const lamps=[];let menLight;
-{const g=new THREE.Group();g.position.set(A(-2.6),0,A(-14));scene.add(g);
+{const g=new THREE.Group();g.position.set(A(2.6),0,A(-14));scene.add(g);
  const T=A(1/6),M=MAT.goldBeaten,top=18*T,up=new THREE.Vector3(0,1,0),V=(x,y)=>new THREE.Vector3(x,y,0);
  const cupG=lathe([[.006,0],[.012,.007],[.019,.02],[.025,.036],[.028,.048],[.026,.056],[.022,.054]],18),
    knobG=new THREE.SphereGeometry(.03,18,12),
@@ -4798,10 +4802,10 @@ const lamps=[];let menLight;
   for(let i=0;i<2;i++){const fp=new THREE.Group();fp.position.set(-.3-i*.2,.008,.45);g.add(fp);add(lathe([[0,0],[.06,0],[.068,.02],[.062,.024],[0,.008]],20),M,0,0,0,fp);const hd=add(C(.006,.006,.18,8),M,0,.012,.15,fp);hd.rotation.x=Math.PI/2;}
   for(const o of g.children.slice(n0))grabbable(o);}
  menLight=new THREE.PointLight(LIN("#ffc070"),0,9,2);menLight.position.set(0,top+.25,0);g.add(menLight);
- wall(-4.1,-1.1,-14.6,-13.4);sign(["המנורה","גביעיה כפתוריה ופרחיה ממנה יהיו","שמות כה, לא; מנחות כח"],A(-2.6),2.1,A(-14)+1);}
+ wall(1.1,4.1,-14.6,-13.4);sign(["המנורה","גביעיה כפתוריה ופרחיה ממנה יהיו","שמות כה, לא; מנחות כח"],A(2.6),2.1,A(-14)+1);}
 // incense altar (Shemot 30:1-10): square, its horns of one piece with it, a gold crown (zer) around the top
 let incSmoke=[];
-{const g=new THREE.Group();g.position.set(0,0,A(-12.5));scene.add(g);
+{const g=new THREE.Group();g.position.set(0,0,A(-11));scene.add(g);
  const W=A(1),Ht=A(2),G=MAT.gold;
  add(B(W,Ht,W),G,0,Ht/2,0,g);
  for(const sx of[-1,1])for(const sz of[-1,1])add(B(.018,Ht,.018),G,sx*W/2,Ht/2,sz*W/2,g);
@@ -4813,7 +4817,7 @@ let incSmoke=[];
  add(new THREE.CircleGeometry(.07,16),new THREE.MeshBasicMaterial({color:LIN("#ff7a2a"),toneMapped:false}),0,Ht+.003,0,g,false).rotation.x=-Math.PI/2;
  {const n=64,c=cv(n,n),x=c.getContext("2d"),img=x.createImageData(n,n);for(let j=0;j<n;j++)for(let i=0;i<n;i++){const r=Math.hypot(i-n/2,j-n/2)/(n/2),f=fbm(i/8,j/8),a=clamp((1-r*r)*(.3+f)-.1,0,1),k=(j*n+i)*4;img.data[k]=img.data[k+1]=232;img.data[k+2]=226;img.data[k+3]=a*170;}
   x.putImageData(img,0,0);const st=tex(c,null);for(let i=0;i<18;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:st,transparent:true,depthWrite:false,opacity:0}));sp.userData.t=i/18;sp.userData.y0=Ht+.05;g.add(sp);incSmoke.push(sp);}}
- wall(-.6,.6,A(-12.5)-.6,A(-12.5)+.6);sign(["מזבח הקטורת","אמה על אמה, וגובהו אמתיים","שמות ל, א-ב"],0,1.75,A(-12.5)+.8,2.4);}
+ wall(-.6,.6,A(-11)-.6,A(-11)+.6);sign(["מזבח הקטורת","אמה על אמה, וגובהו אמתיים","שמות ל, א-ב"],0,1.75,A(-11)+.8,2.4);}
 sign(["הפרוכת","שמות כו, לא-לג"],0,2.8,A(-20)+.9,2.6);
 // ark and cover (Shemot 25:10-22): a gold box with a crown (zer) around the top, the cover a handbreadth thick,
 // rings and poles of gold. The cherubim are shown abstractly, without faces, their wings spread upward over the cover.
