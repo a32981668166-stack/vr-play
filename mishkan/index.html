@@ -4581,7 +4581,12 @@ const mishkan=new THREE.Group();scene.add(mishkan);
  // the other four in two rows of two. Gold-covered, on the outside of the boards.
  {const bar=(len,x,y,z,alongX)=>{const b=add(C(.045,.045,len-.04,10),MAT.gold,x,y,z,mishkan);if(alongX)b.rotation.z=Math.PI/2;else b.rotation.x=Math.PI/2;};
   for(const s of[-1,1]){const x=A(s*6.05);bar(A(30),x,A(5)+.18,A(-15),false);for(const y of[2.5,7.5])for(const zc of[-22.5,-7.5])bar(A(15),x,A(y)+.18,A(zc),false);}
-  const zw=A(-31.05);bar(A(12),0,A(5)+.18,zw,true);for(const y of[2.5,7.5])for(const xc of[-3,3])bar(A(6),A(xc),A(y)+.18,zw,true);}
+  const zw=A(-31.05);bar(A(12),0,A(5)+.18,zw,true);for(const y of[2.5,7.5])for(const xc of[-3,3])bar(A(6),A(xc),A(y)+.18,zw,true);
+  // gold rings on the boards, holding the upper and lower bars (Shemot 26:29 "ואת טבעתיהם תעשה זהב בתים לבריחם")
+  {const ringG=new THREE.TorusGeometry(.065,.014,8,20),R=[],m4=new THREE.Matrix4(),q=new THREE.Quaternion(),one=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
+   for(const s of[-1,1])for(let i=0;i<20;i++)for(const y of[2.5,7.5])R.push([A(s*6.05),A(y)+.18,A(-30+1.5*i+.75),0]);
+   for(let i=0;i<8;i++)for(const y of[2.5,7.5])R.push([A(-6+1.5*i+.75),A(y)+.18,zw,Math.PI/2]);
+   const rm=new THREE.InstancedMesh(ringG,MAT.gold,R.length);R.forEach(([x,y,z,ry],i)=>{q.setFromAxisAngle(new THREE.Vector3(0,1,0),ry);m4.compose(p.set(x,y,z),q,one);rm.setMatrixAt(i,m4);});rm.castShadow=true;mishkan.add(rm);}}
  // coverings draped over the top and sides
  const top=kh+.2,drop=A(1);
  const LT=.6,GT=.7,coverRoof=PS.leather?retile(MAT.cover,A(13),A(31.4),LT):MAT.cover,coverSide=retile(MAT.goat,A(31.4),top-drop,GT),coverBack=retile(MAT.goat,A(13),top-drop,GT);
