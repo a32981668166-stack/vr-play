@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3a2a10">
-<link rel="icon" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>המשכן במשקפיים</title>
@@ -65,6 +62,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:var(--card);box-shadow:0 4px 12px rgba(43,33,24,.3)}
 </style>
 
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <canvas id="scene" aria-label="חצר המשכן"></canvas>
@@ -4798,7 +4796,7 @@ const lamps=[];let menLight;
  wall(-4.1,-1.1,-14.6,-13.4);sign(["המנורה","גביעיה כפתוריה ופרחיה ממנה יהיו","שמות כה, לא; מנחות כח"],A(-2.6),2.1,A(-14)+1);}
 // incense altar (Shemot 30:1-10): square, its horns of one piece with it, a gold crown (zer) around the top
 let incSmoke=[];
-{const g=new THREE.Group();g.position.set(0,0,A(-18));scene.add(g);
+{const g=new THREE.Group();g.position.set(0,0,A(-12.5));scene.add(g);
  const W=A(1),Ht=A(2),G=MAT.gold;
  add(B(W,Ht,W),G,0,Ht/2,0,g);
  for(const sx of[-1,1])for(const sz of[-1,1])add(B(.018,Ht,.018),G,sx*W/2,Ht/2,sz*W/2,g);
@@ -4810,7 +4808,7 @@ let incSmoke=[];
  add(new THREE.CircleGeometry(.07,16),new THREE.MeshBasicMaterial({color:LIN("#ff7a2a"),toneMapped:false}),0,Ht+.003,0,g,false).rotation.x=-Math.PI/2;
  {const n=64,c=cv(n,n),x=c.getContext("2d"),img=x.createImageData(n,n);for(let j=0;j<n;j++)for(let i=0;i<n;i++){const r=Math.hypot(i-n/2,j-n/2)/(n/2),f=fbm(i/8,j/8),a=clamp((1-r*r)*(.3+f)-.1,0,1),k=(j*n+i)*4;img.data[k]=img.data[k+1]=232;img.data[k+2]=226;img.data[k+3]=a*170;}
   x.putImageData(img,0,0);const st=tex(c,null);for(let i=0;i<18;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:st,transparent:true,depthWrite:false,opacity:0}));sp.userData.t=i/18;sp.userData.y0=Ht+.05;g.add(sp);incSmoke.push(sp);}}
- wall(-.6,.6,-18.6,-17.4);sign(["מזבח הקטורת","אמה על אמה, וגובהו אמתיים","שמות ל, א-ב"],0,1.75,A(-18)+.8,2.4);}
+ wall(-.6,.6,A(-12.5)-.6,A(-12.5)+.6);sign(["מזבח הקטורת","אמה על אמה, וגובהו אמתיים","שמות ל, א-ב"],0,1.75,A(-12.5)+.8,2.4);}
 sign(["הפרוכת","שמות כו, לא-לג"],0,2.8,A(-20)+.9,2.6);
 // ark and cover (Shemot 25:10-22): a gold box with a crown (zer) around the top, the cover a handbreadth thick,
 // rings and poles of gold. The cherubim are shown abstractly, without faces, their wings spread upward over the cover.
