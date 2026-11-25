@@ -89,7 +89,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .chip{background:rgba(18,17,28,.8);color:var(--ink);padding:8px 12px;border-radius:10px;font-weight:500;pointer-events:auto;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
 </style>
 
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <canvas id="scene" aria-label="רכבת הרים"></canvas>
@@ -4361,6 +4360,7 @@ function applyWorldLight(){if(!W)return;const T=TIMES[TIME],th=W.theme;
   if(th.cave){sun.intensity=0;sun.castShadow=false;hemi.intensity=.18;hemi.color.set(0x8a7ab8);hemi.groundColor.set(0x241c30);skyMesh.visible=false;scene.background=new THREE.Color(0x07050c);scene.fog.color.set(0x120d1c);scene.fog.near=60;scene.fog.far=420;renderer.toneMappingExposure=1.2;}
   else{sun.intensity=T.int;sun.castShadow=true;hemi.intensity=T.hemi;hemi.color.set(TIME==="night"?0x3a4a70:0xdfe9f5);hemi.groundColor.set(TIME==="night"?0x101520:0xa08868);skyMesh.visible=true;scene.background=null;
     scene.fog.color.set(th.fog[TIME]);scene.fog.near=TIME==="night"?120:240;scene.fog.far=TIME==="night"?900:1400;renderer.toneMappingExposure=T.exp;}
+  if(th.ash&&!th.cave){skyMesh.visible=false;scene.background=new THREE.Color(th.fog[TIME]);scene.fog.near=TIME==="night"?90:150;scene.fog.far=TIME==="night"?700:950;}
   const lit=TIME==="night"||th.cave;for(const b of W.bulbs)b.material.emissiveIntensity=lit?2.4:.2;headlight.intensity=lit?3:0;}
 
 /* ---------- the tracks ---------- */
@@ -4417,7 +4417,7 @@ const TRACKS={
     [168,4,55],[168,6,82],[152,9,104],[128,4,112],...loopPts(112,4,112,12,"-x",4),[90,5,116],[70,13,124],[46,7,134],[22,4.5,136],[0,11,130],[-20,4.5,122],[-40,9,110],[-56,5,96],
     ...helixPts(-80,60,26,9,5,1.5,Math.PI/4,true),[-102,5,30],[-88,3.6,10],[-74,3,2]],lift:[3,7],tunnels:[]},
  volcano:{name:"הר הגעש",desc:"עלייה גבוהה, צלילה ענקית אל לוע הר הגעש, לולאה, מנהרה בסלע השחור וסליל כפול.",band:"linear-gradient(160deg,#d9a07a 0 35%,#3a2a26 35% 70%,#e2552a 70%)",
-  low:"sand",lowS:.2,rockSlope:[.84,.6],rockH:[8,30],rockGLSL:`vec3 rockCol(vec3 p,vec3 n,float d){float c=smoothstep(.62,.7,fract(p.y*.07+sin(p.x*.03)*.4+d));return mix(mix(vec3(.16,.14,.14),vec3(.27,.24,.23),d),vec3(.7,.22,.08),c*.6);}`,fog:{day:0xcfb8a6,sunset:0xd09a7a,night:0x1d1416},rail:"#ff6a1a",support:"#2a2626",car:"#ffb000",props:"desert",arches:1,
+  low:"sand",lowS:.2,rockSlope:[.84,.6],rockH:[8,30],rockGLSL:`vec3 rockCol(vec3 p,vec3 n,float d){return mix(vec3(.12,.11,.11),vec3(.24,.21,.2),d);}`,fog:{day:0x8a7a72,sunset:0x8a5a48,night:0x1d1416},rail:"#ff6a1a",support:"#2a2626",car:"#ffb000",props:"volcano",arches:1,lowTint:[.2,.18,.17],landCol:0x4a4240,ash:1,lava:true,volcano:[520,620,330,280],
   terrain:(x,z,d)=>{const floor=(fbm(x/90,z/90,4)-.5)*3-.6,q=Math.hypot(x-150,z-170)/150,cone=Math.max(0,1-q)*150-Math.max(0,1-q*3.2)*95;
     const wall=sstep(d,16,70)*(30+50*fbm(x/120+4,z/120+2,5));const far=clamp((Math.hypot(x,z-80)-330)/500,0,1);return floor+Math.max(wall,sstep(d,12,50)*cone)+far*far*140*fbm(x/300,z/300,4);},
   pts:()=>[[-70,2,0],[-40,2,0],[-10,2,0],[15,2.2,0],[35,8,0],[62,26,0],[88,44,0],[108,56,0],[122,58,0],[134,55,0],[150,34,2],[164,10,10],[176,4,26],
@@ -4475,13 +4475,14 @@ function buildWorld(key){disposeWorld();const th=TRACKS[key],G=new THREE.Group()
   if(th.water!==undefined)buildWater(th,G);
   buildProps(th,G);buildSteel(th,G);buildTunnels(th,G);buildArches(th,G);buildStation(th,G,P);buildTrain(th,G);if(th.waterfall){buildWaterfall(th,G);if(th.props==="jungle"){buildWaterfall(th,G,.3);buildWaterfall(th,G,.86);}}if(th.cave)buildCrystals(th,G);
   if(th.props==="forest"||th.props==="desert"||th.props==="jungle"||th.ocean)buildCurtain(th,G);
+  if(th.volcano)buildVolcano(th,G);else VOLC=null;
   buildTargets(th,G);buildLife(th,G);applyWorldLight();scene.environment=th.cave?caveEnv():ENV;return W;}
 let CAVEENV=null;
 function caveEnv(){if(CAVEENV)return CAVEENV;const s=new THREE.Scene(),g=new THREE.SphereGeometry(10,32,16),p=g.attributes.position,cols=[],c=new THREE.Color();
   for(let i=0;i<p.count;i++){const y=p.getY(i)/10,x=p.getX(i)/10;c.setRGB(.06,.04,.09).lerp(new THREE.Color(.25,.6,.7),Math.max(0,Math.sin(x*6))*.25).lerp(new THREE.Color(.5,.25,.7),Math.max(0,Math.cos(y*5))*.2);cols.push(c.r,c.g,c.b);}
   g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));s.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));return CAVEENV=pmrem.fromScene(s,.04).texture;}
 // the land shader: rock on steep or high ground (coloured per world), the low ground texture elsewhere
-function landMat(th,key,ceil){const m=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.96,side:ceil?THREE.BackSide:THREE.FrontSide});const tL=tex(th.low),tR=tex("rock");
+function landMat(th,key,ceil){const m=new THREE.MeshStandardMaterial({color:th.landCol||0xffffff,roughness:.96,side:ceil?THREE.BackSide:THREE.FrontSide});const tL=tex(th.low),tR=tex("rock");
   m.onBeforeCompile=sh=>{sh.uniforms.tLow={value:tL};sh.uniforms.tRock={value:tR};
     sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vWP;varying vec3 vWN;").replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWP=(modelMatrix*vec4(transformed,1.)).xyz;vWN=normalize(mat3(modelMatrix)*objectNormal);");
     sh.fragmentShader=sh.fragmentShader.replace("#include <common>",`#include <common>
@@ -4490,8 +4491,9 @@ vec3 tri(sampler2D t,vec3 p,vec3 n,float s){vec3 w=pow(abs(n),vec3(4.));w/=(w.x+
 ${th.rockGLSL}`).replace("#include <map_fragment>",`vec3 nn=normalize(vWN);float rk=${ceil?"1.":`max(smoothstep(${th.rockSlope[0].toFixed(2)},${th.rockSlope[1].toFixed(2)},nn.y),smoothstep(${th.rockH[0].toFixed(1)},${th.rockH[1].toFixed(1)},vWP.y)*smoothstep(.97,.85,nn.y))`};
   float det=tri(tRock,vWP,nn,.09).r,det2=tri(tRock,vWP,nn,.023).r;vec3 rc=rockCol(vWP,nn,det2)*(.68+det*.62);
   vec3 lo=pow(texture2D(tLow,vWP.xz*${th.lowS.toFixed(3)}).rgb,vec3(2.2))*mix(.84,1.12,texture2D(tRock,vWP.xz*.006).r);
-  diffuseColor.rgb*=mix(lo,pow(rc,vec3(2.2)),rk);`);};
-  m.customProgramCacheKey=()=>"land-"+key;return m;}
+  diffuseColor.rgb*=mix(lo${th.lowTint?`*vec3(${th.lowTint.join(',')})`:''},pow(rc,vec3(2.2)),rk);`);
+    if(th.lava)sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n{float cr=texture2D(tRock,vWP.xz*.0045).r,cr2=texture2D(tRock,vWP.xz*.017+.3).r;float lv=smoothstep(.70,.74,cr)*(1.-smoothstep(.76,.8,cr))+smoothstep(.83,.86,cr2)*.6;totalEmissiveRadiance+=vec3(1.,.26,.04)*lv*(1.-rk)*2.5;}');};
+  m.customProgramCacheKey=()=>"land-"+key+(th.lava?"-lava":"");return m;}
 function buildWater(th,G){const nt=tex("ripple").clone();nt.needsUpdate=true;nt.repeat.set(th.ocean?60:120,th.ocean?60:120);
   const geo=new THREE.PlaneGeometry(2400,2400,th.ocean?160:1,th.ocean?160:1);geo.rotateX(-Math.PI/2);
   const m=new THREE.MeshStandardMaterial({color:LIN(th.ocean?"#08364d":"#1d3b40"),roughness:.12,metalness:0,normalMap:nt,normalScale:new THREE.Vector2(.3,.3),transparent:true,opacity:.94});
@@ -4553,6 +4555,7 @@ function tplant(G,name,n,h,minD,maxD,minY,maxY,tint){const g=MODELS[name];if(!g)
   const k=scatter(n,minD,maxD,minY,maxY,(x,y,z,i)=>{const S=(h[0]+Math.random()*(h[1]-h[0]))/H;ps.set(x,y-.1,z);q.setFromAxisAngle(UP,Math.random()*6.28);sc.set(S,S,S);m4.compose(ps,q,sc);const v=.85+Math.random()*.3;if(tint)c.copy(tint).multiplyScalar(v);else c.setRGB(v,v,v);for(const im of parts){im.setMatrixAt(i,m4);im.setColorAt(i,c);}});
   for(const im of parts){im.count=k;im.frustumCulled=false;im.castShadow=im.receiveShadow=true;G.add(im);}return k;}
 function buildPlants(th,G){const P=(...a)=>plant(G,...a);
+  if(th.props==="volcano"){P(["Rock_1","Rock_2","Rock_3"],320,[1,7],8,110,-5,20,LIN("#3a3432"));P(["TreeStump_Moss","WoodLog_Moss"],60,[.8,1.6],8,80,-5,10,LIN("#2a2422"));}
   if(th.props==="desert"){tplant(G,"Saguaro",80,[3.5,7.5],8,80,-5,6);P(["Rock_1","Rock_2","Rock_3"],170,[1,6],9,95,-5,12,LIN("#e7a070"));P(["Cactus_1","Cactus_2","Cactus_3","CactusFlowers_2"],200,[1.6,4.5],8,80,-5,6);P(["Bush_2","Bush_1"],180,[.5,1.1],8,70,-5,6,LIN("#c7b070"),false);}
   if(th.props==="snowpines"){const rp=tplant(G,"RealPine",300,[8,15],7,70,-5,95,LIN("#c4dccb"));P(["PineTree_Snow_1","PineTree_Snow_2","PineTree_Snow_3"],rp?400:620,[6,14],rp?60:7,140,-5,95);P(["Rock_Snow_1","Rock_Snow_2"],120,[1,4.5],9,90,-5,80);P(["Bush_Snow_1"],140,[.6,1.4],7,80,-5,60,null,false);}
   if(th.props==="forest"){const oaks=tplant(G,"Oak",90,[9,14],8,55,-1.5,40);P(["CommonTree_1","CommonTree_2","CommonTree_3","CommonTree_5","BirchTree_1","BirchTree_2"],oaks?300:420,[6,12],oaks?50:7,120,-1.5,60);if(!tplant(G,"RealPine",230,[9,16],14,120,4,60,LIN("#cfeab8")))P(["PineTree_1","PineTree_2","PineTree_3"],210,[8,15],14,120,4,60);
@@ -4696,6 +4699,23 @@ function buildCurtain(th,G){const {TR,N}=W;let best=-1,bs=1e9;for(let i=0;i<N;i+
 /* spray: water thrown up on both sides when the train skims low over a lake or the sea */
 const SPRAY=(()=>{const c=document.createElement("canvas");c.width=c.height=64;const x=c.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,"rgba(255,255,255,.9)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,64,64);
   const tx=new THREE.CanvasTexture(c),list=[];for(let i=0;i<70;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false,opacity:0}));s.visible=false;s.userData={v:new THREE.Vector3(),life:0};scene.add(s);list.push(s);}return{list,next:0,acc:0};})();
+let VOLC=null;
+function buildVolcano(th,G){const [cx,cz,R,H]=th.volcano,seg=96,ring=40,pos=[],idx=[];
+ for(let j=0;j<=ring;j++){const t=j/ring,r=R*(1-t*.88);for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2,n=fbm(Math.cos(a)*3+5,Math.sin(a)*3+t*4,4),rr=r*(.85+.3*n),y=H*Math.pow(t,.85)*(t>.93?1-(t-.93)*4:1)+n*14*(1-t);pos.push(cx+Math.cos(a)*rr,y-20,cz+Math.sin(a)*rr);}}
+ for(let j=0;j<ring;j++)for(let i=0;i<seg;i++){const a=j*(seg+1)+i,b=a+seg+1;idx.push(a,b,a+1,b,b+1,a+1);}
+ const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+ const cone=new THREE.Mesh(g,landMat(th,"volcano-cone"));cone.receiveShadow=true;G.add(cone);
+ // glowing crater and lava streams down the side
+ const lavaM=new THREE.MeshBasicMaterial({color:LIN("#ff5a10"),toneMapped:false,fog:false});const cr=new THREE.Mesh(new THREE.CircleGeometry(R*.11,32),lavaM);cr.rotation.x=-Math.PI/2;cr.position.set(cx,H*.97-20,cz);G.add(cr);
+ for(let k=0;k<5;k++){const a=k*1.25+.4,pts=[];for(let j=0;j<=24;j++){const t=1-j/24*.85,r=R*(1-t*.88)*1.0,y=H*Math.pow(t,.85)-20+3;pts.push(new THREE.Vector3(cx+Math.cos(a+Math.sin(j*.5)*.05)*r,y,cz+Math.sin(a+Math.sin(j*.5)*.05)*r));}
+  const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),48,2.2+k%2,6),lavaM);G.add(tube);}
+ // smoke column: soft sprites rising and spreading
+ const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),gr=x.createRadialGradient(64,64,4,64,64,64);gr.addColorStop(0,"rgba(90,84,82,.9)");gr.addColorStop(.6,"rgba(70,66,64,.45)");gr.addColorStop(1,"rgba(60,56,54,0)");x.fillStyle=gr;x.fillRect(0,0,128,128);
+ const st=new THREE.CanvasTexture(c),plume=[];for(let i=0;i<46;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:st,transparent:true,depthWrite:false,fog:false,color:0x7a7270}));sp.userData.t=i/46;sp.userData.r=Math.random();G.add(sp);plume.push(sp);}
+ const glow=new THREE.PointLight(LIN("#ff6a20"),2.2,R*1.6,1.5);glow.position.set(cx,H-10,cz);G.add(glow);
+ VOLC={plume,cx,cz,top:H-18,glow,t:0};}
+function stepVolcano(dt){if(!VOLC||!W||!W.theme.volcano)return;VOLC.t+=dt;for(const sp of VOLC.plume){let t=(sp.userData.t+VOLC.t*.018)%1;const h=t*260,w=18+t*130;sp.position.set(VOLC.cx+Math.sin(sp.userData.r*9+t*3)*w*.35+t*80,VOLC.top+h,VOLC.cz+Math.cos(sp.userData.r*7)*w*.3);sp.scale.setScalar(w*1.4);sp.material.opacity=Math.min(1,t*8)*(1-t)*.85;}
+ VOLC.glow.intensity=2+Math.sin(VOLC.t*2.3)*.4+Math.sin(VOLC.t*5.1)*.2;}
 function stepSpray(dt){const th=W.theme;if(mode!=="menu"&&th.water!==undefined&&F.p.y-th.water<4.2&&v>8&&state==="ride"){SPRAY.acc+=dt*40;while(SPRAY.acc>1){SPRAY.acc--;const s=SPRAY.list[SPRAY.next++%SPRAY.list.length],sd=Math.random()<.5?-1:1;
       s.position.copy(F.p).addScaledVector(F.r,sd*.8).setY(th.water+.2);s.userData.v.copy(F.r).multiplyScalar(sd*(2+Math.random()*2)).addScaledVector(F.t,v*.15).setY(3+Math.random()*4);s.userData.life=1;s.visible=true;s.scale.setScalar(.6);}}
   for(const s of SPRAY.list){if(!s.visible)continue;const u=s.userData;u.life-=dt;if(u.life<=0){s.visible=false;continue;}u.v.y-=9.8*dt;s.position.addScaledVector(u.v,dt);s.material.opacity=u.life*.7;s.scale.setScalar(.6+(1-u.life)*1.8);}}
@@ -4987,7 +5007,7 @@ function startLoop(){renderer.setAnimationLoop(()=>{let dt=Math.min(clock.getDel
     if(c>=12&&c<14)pos.lerp(Q,k(12,14));else if(c>=14&&c<24){pos.copy(Q);perch=1;}else if(c>=24&&c<26)pos.copy(Q).lerp(B,k(24,26));
     const away=c<2?(2-c)*5:c>30?(c-30)*5:0,wb=1-perch;P.visible=mode==="menu"||c<32;
     P.position.set(pos.x+away+wb*Math.sin(t*.9)*.25,pos.y+wb*Math.sin(t*2.1)*.15,pos.z+wb*Math.sin(t*.6)*.2);P.rotation.z=wb*Math.sin(t*1.3)*.12;const pm=P.userData.b.userData.mx;if(pm)pm.timeScale=perch?.12:1;const bm=P.userData.b.userData.bm;if(bm){const w=Math.sin(t*14)*.6;bm.userData.w[0].rotation.z=w;bm.userData.w[1].rotation.z=-w;}}
-  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);
+  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);stepVolcano(dt);
   if(W.water)W.water.offset.set(t*.01,t*.007);for(const f of W.anim)f(t);
   for(const T of W.targets){if(T.pop>0){T.pop-=dt;T.g.scale.setScalar(Math.max(.01,1.35*(1+(.35-T.pop)*4)));if(T.pop<=0)T.g.visible=false;}else if(T.g.visible)T.g.rotation.z+=dt;}
   for(let i=beams.length-1;i>=0;i--){beams[i].t-=dt;beams[i].line.material.opacity=beams[i].t/.12;if(beams[i].t<=0){scene.remove(beams[i].line);beams[i].line.geometry.dispose();beams.splice(i,1);}}
@@ -5005,6 +5025,5 @@ let DBG=null;window.__R={vrmenu(){mode="vrmenu";overlay.hidden=true;board.visibl
 })();}catch(e){const st=document.getElementById("status");st.textContent="המשחק לא הצליח לעלות בדפדפן הזה: "+e.message;st.classList.add("bad");}
 </script>
 
-<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>
 </html>
