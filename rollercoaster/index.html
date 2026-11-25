@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#10203a">
-<link rel="icon" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>רכבות הרים</title>
@@ -92,6 +89,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .chip{background:rgba(18,17,28,.8);color:var(--ink);padding:8px 12px;border-radius:10px;font-weight:500;pointer-events:auto;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
 </style>
 
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <canvas id="scene" aria-label="רכבת הרים"></canvas>
@@ -4417,7 +4415,20 @@ const TRACKS={
   terrain:(x,z,d,dr,isl)=>{let h=-14+(fbm(x/120,z/120,3)-.5)*6;for(const[cx,cz,r]of isl){const q=Math.hypot(x-cx,z-cz)/r,m=1-sstep(q,.55,1.05);h=Math.max(h,-14+m*(16+22*fbm(x/50+cx,z/50+cz,4)*(1-q*.5)));}return h;},
   pts:()=>[[-60,3,0],[-30,3,0],[0,3,0],[20,4,0],[45,18,0],[70,36,0],[86,44,0],[98,45,0],[110,40,0],[124,22,5],[138,6,14],[154,3.6,30],
     [168,4,55],[168,6,82],[152,9,104],[128,4,112],...loopPts(112,4,112,12,"-x",4),[90,5,116],[70,13,124],[46,7,134],[22,4.5,136],[0,11,130],[-20,4.5,122],[-40,9,110],[-56,5,96],
-    ...helixPts(-80,60,26,9,5,1.5,Math.PI/4,true),[-102,5,30],[-88,3.6,10],[-74,3,2]],lift:[3,7],tunnels:[]}};
+    ...helixPts(-80,60,26,9,5,1.5,Math.PI/4,true),[-102,5,30],[-88,3.6,10],[-74,3,2]],lift:[3,7],tunnels:[]},
+ volcano:{name:"הר הגעש",desc:"עלייה גבוהה, צלילה ענקית אל לוע הר הגעש, לולאה, מנהרה בסלע השחור וסליל כפול.",band:"linear-gradient(160deg,#d9a07a 0 35%,#3a2a26 35% 70%,#e2552a 70%)",
+  low:"sand",lowS:.2,rockSlope:[.84,.6],rockH:[8,30],rockGLSL:`vec3 rockCol(vec3 p,vec3 n,float d){float c=smoothstep(.62,.7,fract(p.y*.07+sin(p.x*.03)*.4+d));return mix(mix(vec3(.16,.14,.14),vec3(.27,.24,.23),d),vec3(.7,.22,.08),c*.6);}`,fog:{day:0xcfb8a6,sunset:0xd09a7a,night:0x1d1416},rail:"#ff6a1a",support:"#2a2626",car:"#ffb000",props:"desert",arches:1,
+  terrain:(x,z,d)=>{const floor=(fbm(x/90,z/90,4)-.5)*3-.6,q=Math.hypot(x-150,z-170)/150,cone=Math.max(0,1-q)*150-Math.max(0,1-q*3.2)*95;
+    const wall=sstep(d,16,70)*(30+50*fbm(x/120+4,z/120+2,5));const far=clamp((Math.hypot(x,z-80)-330)/500,0,1);return floor+Math.max(wall,sstep(d,12,50)*cone)+far*far*140*fbm(x/300,z/300,4);},
+  pts:()=>[[-70,2,0],[-40,2,0],[-10,2,0],[15,2.2,0],[35,8,0],[62,26,0],[88,44,0],[108,56,0],[122,58,0],[134,55,0],[150,34,2],[164,10,10],[176,4,26],
+    ...loopPts(178,4,40,13,"z",3),[182,5,62],[176,12,88],[158,20,104],[132,16,112],[106,6,116],[80,14,118],[56,6,118],
+    ...helixPts(20,140,22,14,6,2),[-6,7,128],[-36,9,112],[-60,7,84],[-78,6,52],[-84,4,24],[-80,2.4,6]],lift:[4,8],tunnels:[[27,29]]},
+ lake:{name:"אגם ההרים",desc:"הצלילה הגבוהה ביותר, שתי לולאות ברצף מעל העמק, מנהרה וסליל מהיר בין האורנים.",band:"linear-gradient(160deg,#a8d2f0 0 40%,#2f6b44 40% 75%,#5aa0c8 75%)",
+  low:"grass",lowS:.18,rockSlope:[.8,.58],rockH:[900,950],rockGLSL:`vec3 rockCol(vec3 p,vec3 n,float d){return mix(vec3(.44,.45,.42),vec3(.34,.44,.28),smoothstep(.3,.8,n.y)*d);}`,fog:{day:0xd2e0e6,sunset:0xd8c4b0,night:0x121a1e},rail:"#2f7cf6",support:"#e8e8e8",car:"#2f7cf6",props:"forest",arches:1,
+  terrain:(x,z,d)=>{const floor=(fbm(x/80,z/80,4)-.5)*3,h=sstep(d,14,90)*(20+60*ridged(x/150+2,z/150+5));const far=clamp((Math.hypot(x+40,z-40)-330)/500,0,1);return floor+h+far*far*200*ridged(x/300,z/300);},
+  pts:()=>[[0,2,-70],[0,2,-40],[0,2,-10],[0,2.3,15],[0,9,35],[0,28,60],[0,46,84],[0,58,100],[0,60,112],[-4,55,124],[-14,32,140],[-30,10,152],[-52,4.5,158],
+    ...loopPts(-66,4.5,158,12,"-x",3),[-86,5,160],[-108,9,150],...loopPts(-122,5,128,12,"-z",-3),[-125,6,100],[-124,14,76],[-120,6,52],[-114,12,30],
+    ...helixPts(-90,10,22,12,5,1.5,Math.PI,false),[-50,6,-20],[-32,10,-48],[-16,6,-70],[-4,2.6,-84]],lift:[4,8],tunnels:[[38,40]]}};
 const SC=1.6;for(const k in TRACKS){const T=TRACKS[k],f=T.pts,sc=k==="cave"?1.35:SC;T.pts=()=>f().map(p=>[p[0]*sc,p[1]*sc,p[2]*sc]);
   if(T.islands)T.islands=T.islands.map(([x,z,r])=>[x*SC,z*SC,r*SC]);if(T.river)T.river=T.river.map(([x,z])=>[x*SC,z*SC]);}
 const KEYS=Object.keys(TRACKS);
