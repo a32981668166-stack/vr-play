@@ -133,7 +133,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
     <footer>
       <p class="result" id="result"></p>
       <p class="status" id="status">בודק אם המשקפיים זמינים…</p>
-      <p class="status" style="opacity:.6;font-size:.8em">גרסה: 26.11.2026 20:40</p>
+      <p class="status" style="opacity:.6;font-size:.8em">גרסה: 26.11.2026 22:30</p>
       <div class="btns"><button class="primary" id="vrBtn" disabled>כניסה למשקפיים</button><button class="secondary" id="flatBtn">צפייה על המסך</button></div>
     </footer>
   </aside>
@@ -4469,24 +4469,46 @@ function buildWorld(key){disposeWorld();const th=TRACKS[key],G=new THREE.Group()
       if(bi>=0&&Math.sqrt(bd)<=r*CELL)return[Math.sqrt(bd),bi];}
     return nearAll(x,z);};
   const riverD=th.river?(x,z)=>{let bd=1e9;const R=th.river;for(let i=0;i<R.length-1;i++){const[a,b]=R[i],[c,d]=R[i+1],dx=c-a,dz=d-b,t=clamp(((x-a)*dx+(z-b)*dz)/(dx*dx+dz*dz),0,1),e=(x-a-dx*t)**2+(z-b-dz*t)**2;if(e<bd)bd=e;}return Math.sqrt(bd);}:null;
+  // the land hugs the track (no stilts), except at a few "chasms": the highest stretches, where the ground falls away into a gorge
+  const HUG=!th.cave&&!th.ocean&&!th.noHug,chasm=new Uint8Array(N),CY=new Float32Array(N).fill(1e9);W.CY=CY;
+  if(HUG){const nat=i=>th.terrain(TR.p[i].x,TR.p[i].z,0,riverD?riverD(TR.p[i].x,TR.p[i].z):undefined,th.islands);const runs=[];let a0=-1;
+    for(let i=0;i<=N;i++){const on=i<N&&!TR.tun[i]&&TR.p[i].y-nat(i)>14&&TR.u[i].y>.2;if(on&&a0<0)a0=i;if(!on&&a0>=0){if(i-a0>N*.02)runs.push([a0,i]);a0=-1;}}
+    const straight=([a,b])=>{let t=0;for(let i=a;i<b-8;i+=8){const u=TR.p[i+8].clone().sub(TR.p[i]),v=TR.p[Math.min(b-1,i+16)].clone().sub(TR.p[i+8]);u.y=v.y=0;t+=u.angleTo(v);}return (b-a)/(1+t*3);};runs.sort((p,q)=>straight(q)-straight(p));W.chasms=runs.slice(0,2).map(([a,b])=>{const m=Math.floor((b-a)*.18),A=a+m,B=b-m;for(let i=A;i<B;i++)chasm[i]=1;let mn=1e9;for(let i=A;i<B;i++)mn=Math.min(mn,TR.p[i].y);for(let i=A-80;i<B+80;i++)CY[(i+N)%N]=Math.min(CY[(i+N)%N],mn);return[A,B];}).filter(([a,b])=>b-a>N*.012);}
+  const CW=new Float32Array(N);for(let i=0;i<N;i++){let c=0;for(let j=-60;j<=60;j+=3)c+=chasm[(i+j+N)%N];CW[i]=c/41;}W.CW=CW;W.chasm=chasm;W.fine=HUG;const HT=new Float32Array(N);for(let i=0;i<N;i++){const P0=TR.p[i],ci=Math.floor(P0.x/CELL),cj=Math.floor(P0.z/CELL);let m=P0.y;for(let di=-1;di<=1;di++)for(let dj=-1;dj<=1;dj++){const Lc=grid.get(gk(ci+di,cj+dj));if(Lc)for(const[a,b,k]of Lc)if(Math.hypot(a-P0.x,b-P0.z)<16)m=Math.min(m,TR.p[k].y);}HT[i]=m;}W.HT=HT;
+  const ridge=(x,z,h0)=>{const ci=Math.floor(x/CELL),cj=Math.floor(z/CELL),E=[];for(let di=-4;di<=4;di++)for(let dj=-4;dj<=4;dj++){const Lc=grid.get(gk(ci+di,cj+dj));if(Lc)for(const e of Lc)E.push(e);}
+    let h=h0,cut=1e9;for(const[a,b,k]of E){if(TR.tun[k]||TR.u[k].y<.2||!(W.CW[k]>0))continue;const d=Math.hypot(x-a,z-b);if(d<75){const lo=Math.min(h0,W.CY[k]-34-fbm(x/40,z/40,3)*14);h=Math.min(h,h0+(lo-h0)*(1-sstep(d,18,75))*W.CW[k]);}}
+    let best=h;for(const[a,b,k]of E){if(TR.tun[k]||TR.u[k].y<.2)continue;const d=Math.hypot(x-a,z-b);if(d<11)cut=Math.min(cut,TR.p[k].y-1.6-(11-d)*.05);
+      const top=W.HT[k]-1.7-(W.fine?2.2:0)*(1-W.CW[k]);if(top<=h)continue;const w=d<9?1:Math.max(0,1-(d-9)/Math.max(10,(top-h)*2.2));if(w<=0)continue;const c=h+(top-h)*Math.pow(w,1.3)*(1-W.CW[k]);if(c>best)best=c;}
+    return Math.min(best,cut);};
   const groundAt=(x,z)=>{const[d,i]=near(x,z),ty=TR.p[i].y;let h=th.terrain(x,z,d,riverD?riverD(x,z):undefined,th.islands);
-    if(TR.tun[i]&&TR.tunD[i]>14&&d<46){h=Math.max(h,ty+9+(46-d)*.35-(d>16?(d-16)*.6:0));}else if(d<11)h=Math.min(h,ty-1.6-(11-d)*.05);return h;};W.groundAt=groundAt;W.near=near;
+    if(TR.tun[i]&&TR.tunD[i]>14&&d<46){h=Math.max(h,ty+9+(46-d)*.35-(d>16?(d-16)*.6:0));}
+    else if(HUG)h=ridge(x,z,h);
+    else if(d<11)h=Math.min(h,ty-1.6-(11-d)*.05);return h;};W.groundAt=groundAt;W.near=near;
   {const S=th.cave?700:1800,R=th.cave?180:230,cx=TR.p.reduce((a,p)=>a+p.x,0)/N,cz=TR.p.reduce((a,p)=>a+p.z,0)/N,geo=new THREE.PlaneGeometry(S,S,R,R);geo.rotateX(-Math.PI/2);geo.translate(cx,0,cz);const p=geo.attributes.position;
    for(let i=0;i<p.count;i++)p.setY(i,groundAt(p.getX(i),p.getZ(i)));geo.computeVertexNormals();
-   const mesh=new THREE.Mesh(geo,landMat(th,key,false));mesh.receiveShadow=true;mesh.castShadow=true;G.add(mesh);
+   const mesh=new THREE.Mesh(geo,landMat(th,key,false));mesh.receiveShadow=true;mesh.castShadow=true;G.add(mesh);if(HUG)G.add(hugStrip(th,key,chasm,riverD));
    if(th.cave){const cg=new THREE.PlaneGeometry(S,S,R,R);cg.rotateX(Math.PI/2);cg.translate(cx,0,cz);const q=cg.attributes.position;
      for(let i=0;i<q.count;i++){const x=q.getX(i),z=q.getZ(i),[d]=near(x,z);q.setY(i,Math.max(groundAt(x,z)+2,th.ceiling(x,z,d)));}cg.computeVertexNormals();
      const cm=new THREE.Mesh(cg,landMat(th,key+"c",true));G.add(cm);}}
   if(th.water!==undefined)buildWater(th,G);
   buildProps(th,G);buildSteel(th,G);buildTunnels(th,G);buildArches(th,G);buildStation(th,G,P);buildTrain(th,G);if(th.waterfall){buildWaterfall(th,G);if(th.props==="jungle"){buildWaterfall(th,G,.3);buildWaterfall(th,G,.86);}}if(th.cave)buildCrystals(th,G);
   if(th.props==="forest"||th.props==="desert"||th.props==="jungle"||th.ocean)buildCurtain(th,G);
-  if(th.volcano)buildVolcano(th,G);else VOLC=null;
+  if(th.volcano)buildVolcano(th,G);else VOLC=null;FALLS=null;if(W.chasms&&W.chasms.length&&!th.volcano&&!th.cave)buildFalls(th,G);
   buildTargets(th,G);buildLife(th,G);applyWorldLight();scene.environment=th.cave?caveEnv():ENV;return W;}
 let CAVEENV=null;
 function caveEnv(){if(CAVEENV)return CAVEENV;const s=new THREE.Scene(),g=new THREE.SphereGeometry(10,32,16),p=g.attributes.position,cols=[],c=new THREE.Color();
   for(let i=0;i<p.count;i++){const y=p.getY(i)/10,x=p.getX(i)/10;c.setRGB(.06,.04,.09).lerp(new THREE.Color(.25,.6,.7),Math.max(0,Math.sin(x*6))*.25).lerp(new THREE.Color(.5,.25,.7),Math.max(0,Math.cos(y*5))*.2);cols.push(c.r,c.g,c.b);}
   g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));s.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));return CAVEENV=pmrem.fromScene(s,.04).texture;}
 // the land shader: rock on steep or high ground (coloured per world), the low ground texture elsewhere
+// fine ground strip along the track: an embankment the train rides on, blending out into the natural land
+function hugStrip(th,key,chasm,riverD){const {TR,N}=W,O=[-40,-30,-22,-16,-11,-7,-4,0,4,7,11,16,22,30,40],pos=[],idx=[];let cols=0,prev=-1;
+  for(let i=0;i<=N;i+=2){const k=i%N;if(TR.tun[k]||W.CW[k]>.02){prev=-1;continue;}const p=TR.p[k],t=TR.p[(k+1)%N].clone().sub(TR.p[(k+N-1)%N]);t.y=0;t.normalize();const t2=TR.p[(k+8)%N].clone().sub(TR.p[(k+N-8)%N]);t2.y=0;const ta=TR.p[(k+8)%N].clone().sub(TR.p[k]),tb=TR.p[k].clone().sub(TR.p[(k+N-8)%N]);ta.y=tb.y=0;const turn=Math.atan2(tb.x*ta.z-tb.z*ta.x,tb.x*ta.x+tb.z*ta.z),rad=Math.max(1,t2.length())/Math.max(1e-3,Math.abs(turn)*2),inner=turn>0?1:-1;const rx=-t.z,rz=t.x,top=W.HT[k]-1.7;if(W.HT[k]<p.y-3){prev=-1;continue;}
+    const base=pos.length/3;for(const o0 of O){const o=(o0*inner>0)?Math.sign(o0)*Math.min(Math.abs(o0),rad*.7):o0,x=p.x+rx*o,z=p.z+rz*o,d=Math.abs(o);let h=th.terrain(x,z,d,riverD?riverD(x,z):undefined,th.islands);
+      if(top>h){const w=d<9?1:Math.max(0,1-(d-9)/Math.max(10,(top-h)*2.2));h=h+(top-h)*Math.pow(w,1.3)+(d>9?(fbm(x/25,z/25,3)-.5)*2.5*w:0);}else if(d<11)h=Math.min(h,top);
+      if(d>=40)h-=1.5;pos.push(x,h,z);}
+    if(prev>=0)for(let c=0;c<O.length-1;c++){const a=prev+c,b=base+c;idx.push(a,b,a+1,a+1,b,b+1);}prev=base;}
+  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,landMat(th,key,false));m.receiveShadow=true;return m;}
 function landMat(th,key,ceil){const m=new THREE.MeshStandardMaterial({color:th.landCol||0xffffff,roughness:.96,side:ceil?THREE.BackSide:THREE.FrontSide});const tL=tex(th.low),tR=tex("rock");
   m.onBeforeCompile=sh=>{sh.uniforms.tLow={value:tL};sh.uniforms.tRock={value:tR};
     sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vWP;varying vec3 vWN;").replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWP=(modelMatrix*vec4(transformed,1.)).xyz;vWN=normalize(mat3(modelMatrix)*objectNormal);");
@@ -4512,6 +4534,23 @@ function mergeParts(parts){const pos=[],nor=[],col=[],idx=[],v=new THREE.Vector3
     const I=g.index;if(I)for(let i=0;i<I.count;i++)idx.push(I.getX(i)+off);else for(let i=0;i<P.count;i++)idx.push(i+off);off+=P.count;}
   const o=new THREE.BufferGeometry();o.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));o.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));o.setAttribute("color",new THREE.Float32BufferAttribute(col,3));o.setIndex(idx);return o;}
 const MX=(x,y,z,sx=1,sy=1,sz=1,rx=0,ry=0,rz=0)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(sx,sy,sz));
+// a waterfall pouring off a cliff beside the first gorge, into a river at the bottom
+let FALLS=null;
+function waterTex(streak){const c=document.createElement("canvas");c.width=256;c.height=512;const x=c.getContext("2d");x.fillStyle=streak?"#7fa9b8":"#2d6f86";x.fillRect(0,0,256,512);
+  for(let i=0;i<(streak?260:180);i++){const a=Math.random();x.fillStyle=streak?`rgba(255,255,255,${.25+a*.6})`:`rgba(180,225,240,${.1+a*.25})`;const w=streak?2+Math.random()*6:20+Math.random()*60,h=streak?40+Math.random()*160:3+Math.random()*5;x.fillRect(Math.random()*256,Math.random()*512,w,h);}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function buildFalls(th,G){const {TR,N}=W,[A,B]=W.chasms[0],m=Math.floor((A+B)/2),p=TR.p[m],t=TR.p[(m+4)%N].clone().sub(TR.p[(m+N-4)%N]);t.y=0;t.normalize();
+  const side=new THREE.Vector3(-t.z,0,t.x),top=W.HT[m]+16,bot=W.CY[m]-34,H=top-bot,base=p.clone().addScaledVector(side,48).addScaledVector(t,70);base.y=0;
+  // cliff the water falls from
+  const cliff=new THREE.Mesh(lumpy(new THREE.BoxGeometry(60,H+30,26,10,12,4),.12,7),landMat(th,W.key+"r",false));cliff.position.set(base.x,bot+(H+30)/2-6,base.z).addScaledVector(side,14);cliff.lookAt(cliff.position.x-side.x,cliff.position.y,cliff.position.z-side.z);G.add(cliff);
+  const t1=waterTex(true);t1.repeat.set(2,H/40);
+  const fall=new THREE.Mesh(new THREE.PlaneGeometry(16,H,1,1),new THREE.MeshBasicMaterial({map:t1,transparent:true,opacity:.92,depthWrite:false,fog:true}));fall.position.set(base.x,bot+H/2,base.z);fall.lookAt(p.x,bot+H/2,p.z);G.add(fall);
+  // river along the gorge floor
+  const t2=waterTex(false);t2.repeat.set(4,12);const rv=new THREE.Mesh(new THREE.PlaneGeometry(30,140),new THREE.MeshStandardMaterial({map:t2,roughness:.15,metalness:.1,envMapIntensity:1}));rv.rotation.x=-Math.PI/2;rv.rotation.z=Math.atan2(t.x,t.z);let ry=bot+3;for(let j=-260;j<=260;j++){const q=TR.p[(m+j+N)%N];if(Math.hypot(q.x-p.x,q.z-p.z)<90)ry=Math.min(ry,q.y-6);}rv.position.set(p.x,ry,p.z);G.add(rv);
+  // mist where it lands (sprites)
+  const mt=new THREE.CanvasTexture((()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,255,255,.7)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,128,128);return c;})());
+  for(let i=0;i<8;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:mt,transparent:true,opacity:.5,depthWrite:false}));s.scale.setScalar(14+Math.random()*10);s.position.set(base.x+(Math.random()-.5)*16,bot+3+Math.random()*8,base.z+(Math.random()-.5)*16);G.add(s);}
+  FALLS={t1,t2};}
 function lumpy(g,amt,seed=1){const p=g.attributes.position,v=new THREE.Vector3();for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const k=1+(vnoise(v.x*1.7+seed,v.y*1.7+v.z*1.3+seed)-.5)*amt;p.setXYZ(i,v.x*k,v.y*k,v.z*k);}g.computeVertexNormals();return g;}
 function treeGeo(kind,snowy){const parts=[],bark=LIN("#3d2a1d"),dark=LIN("#1c3a22"),mid=LIN("#27492a"),leaf=LIN("#3d5e27"),snow=LIN("#eef3f8");
   if(kind==="pine"){parts.push({g:new THREE.CylinderGeometry(.12,.22,2.2,7),m:MX(0,1.1,0),c:bark});
@@ -5012,7 +5051,7 @@ function startLoop(){renderer.setAnimationLoop(()=>{let dt=Math.min(clock.getDel
     if(c>=12&&c<14)pos.lerp(Q,k(12,14));else if(c>=14&&c<24){pos.copy(Q);perch=1;}else if(c>=24&&c<26)pos.copy(Q).lerp(B,k(24,26));
     const away=c<2?(2-c)*5:c>30?(c-30)*5:0,wb=1-perch;P.visible=mode==="menu"||c<32;
     P.position.set(pos.x+away+wb*Math.sin(t*.9)*.25,pos.y+wb*Math.sin(t*2.1)*.15,pos.z+wb*Math.sin(t*.6)*.2);P.rotation.z=wb*Math.sin(t*1.3)*.12;const pm=P.userData.b.userData.mx;if(pm)pm.timeScale=perch?.12:1;const bm=P.userData.b.userData.bm;if(bm){const w=Math.sin(t*14)*.6;bm.userData.w[0].rotation.z=w;bm.userData.w[1].rotation.z=-w;}}
-  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);stepVolcano(dt);
+  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);stepVolcano(dt);if(FALLS){FALLS.t1.offset.y-=dt*1.6;FALLS.t2.offset.y-=dt*.08;FALLS.t2.offset.x+=dt*.02;}
   if(W.water)W.water.offset.set(t*.01,t*.007);for(const f of W.anim)f(t);
   for(const T of W.targets){if(T.pop>0){T.pop-=dt;T.g.scale.setScalar(Math.max(.01,1.35*(1+(.35-T.pop)*4)));if(T.pop<=0)T.g.visible=false;}else if(T.g.visible)T.g.rotation.z+=dt;}
   for(let i=beams.length-1;i>=0;i--){beams[i].t-=dt;beams[i].line.material.opacity=beams[i].t/.12;if(beams[i].t<=0){scene.remove(beams[i].line);beams[i].line.geometry.dispose();beams.splice(i,1);}}
