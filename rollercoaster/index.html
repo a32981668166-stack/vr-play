@@ -133,7 +133,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
     <footer>
       <p class="result" id="result"></p>
       <p class="status" id="status">בודק אם המשקפיים זמינים…</p>
-      <p class="status" style="opacity:.6;font-size:.8em">גרסה: 26.11.2026 22:30</p>
+      <p class="status" style="opacity:.6;font-size:.8em">גרסה: 27.11.2026 00:10</p>
       <div class="btns"><button class="primary" id="vrBtn" disabled>כניסה למשקפיים</button><button class="secondary" id="flatBtn">צפייה על המסך</button></div>
     </footer>
   </aside>
@@ -4484,6 +4484,10 @@ function buildWorld(key){disposeWorld();const th=TRACKS[key],G=new THREE.Group()
     if(TR.tun[i]&&TR.tunD[i]>14&&d<46){h=Math.max(h,ty+9+(46-d)*.35-(d>16?(d-16)*.6:0));}
     else if(HUG)h=ridge(x,z,h);
     else if(d<11)h=Math.min(h,ty-1.6-(11-d)*.05);return h;};W.groundAt=groundAt;W.near=near;
+  // clearance: every 3rd track point (the car's space is ~1.2 m above the rail) in a 10 m grid, to keep pillars, rocks and trees out of the train's way
+  {const TG=new Map();for(let i=0;i<N;i+=3){const c=TR.p[i].clone().addScaledVector(TR.u[i],1.1),k=gk(Math.floor(c.x/10),Math.floor(c.z/10));if(!TG.has(k))TG.set(k,[]);TG.get(k).push(c);}
+   W.blocked=(x,z,y0,y1,r)=>{const R=r+1.8,ci=Math.floor(x/10),cj=Math.floor(z/10),n=Math.ceil(R/10);for(let di=-n;di<=n;di++)for(let dj=-n;dj<=n;dj++){const Lc=TG.get(gk(ci+di,cj+dj));if(Lc)for(const c of Lc){if(c.y+1.8<y0||c.y-1.8>y1)continue;if((c.x-x)**2+(c.z-z)**2<R*R)return true;}}return false;};
+   W.hitsMesh=m=>{m.updateMatrixWorld(true);const P=m.geometry.attributes.position,v=new THREE.Vector3(),st=Math.max(1,Math.floor(P.count/600));for(let i=0;i<P.count;i+=st){v.fromBufferAttribute(P,i).applyMatrix4(m.matrixWorld);if(W.blocked(v.x,v.z,v.y,v.y,.6))return true;}return false;};}
   {const S=th.cave?700:1800,R=th.cave?180:230,cx=TR.p.reduce((a,p)=>a+p.x,0)/N,cz=TR.p.reduce((a,p)=>a+p.z,0)/N,geo=new THREE.PlaneGeometry(S,S,R,R);geo.rotateX(-Math.PI/2);geo.translate(cx,0,cz);const p=geo.attributes.position;
    for(let i=0;i<p.count;i++)p.setY(i,groundAt(p.getX(i),p.getZ(i)));geo.computeVertexNormals();
    const mesh=new THREE.Mesh(geo,landMat(th,key,false));mesh.receiveShadow=true;mesh.castShadow=true;G.add(mesh);if(HUG)G.add(hugStrip(th,key,chasm,riverD));
@@ -4494,6 +4498,7 @@ function buildWorld(key){disposeWorld();const th=TRACKS[key],G=new THREE.Group()
   buildProps(th,G);buildSteel(th,G);buildTunnels(th,G);buildArches(th,G);buildStation(th,G,P);buildTrain(th,G);if(th.waterfall){buildWaterfall(th,G);if(th.props==="jungle"){buildWaterfall(th,G,.3);buildWaterfall(th,G,.86);}}if(th.cave)buildCrystals(th,G);
   if(th.props==="forest"||th.props==="desert"||th.props==="jungle"||th.ocean)buildCurtain(th,G);
   if(th.volcano)buildVolcano(th,G);else VOLC=null;FALLS=null;if(W.chasms&&W.chasms.length&&!th.volcano&&!th.cave)buildFalls(th,G);
+  {const rm=[];G.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh&&o.material&&o.material.customProgramCacheKey&&/^land-.+r(-lava)?$/.test(o.material.customProgramCacheKey())&&W.hitsMesh(o))rm.push(o);});for(const o of rm){o.parent.remove(o);}W.removedRocks=rm.length;}
   buildTargets(th,G);buildLife(th,G);applyWorldLight();scene.environment=th.cave?caveEnv():ENV;return W;}
 let CAVEENV=null;
 function caveEnv(){if(CAVEENV)return CAVEENV;const s=new THREE.Scene(),g=new THREE.SphereGeometry(10,32,16),p=g.attributes.position,cols=[],c=new THREE.Color();
@@ -4528,7 +4533,7 @@ function buildWater(th,G){const nt=tex("ripple").clone();nt.needsUpdate=true;nt.
     "#include <begin_vertex>\nfloat w1=sin(position.x*.05+uT*.9)*.45+sin(position.z*.07-uT*1.1)*.35+sin((position.x+position.z)*.13+uT*1.7)*.12;transformed.y+=w1;");};m.customProgramCacheKey=()=>"ocean";}
   const water=new THREE.Mesh(geo,m);water.position.set(40,th.water,80);water.receiveShadow=true;G.add(water);W.water=nt;}
 function scatter(n,minD,maxD,minY,maxY,fn){const {TR}=W,xs=TR.p.map(p=>p.x),zs=TR.p.map(p=>p.z),ar=[Math.min(...xs)-110,Math.max(...xs)+110,Math.min(...zs)-110,Math.max(...zs)+110];let k=0,tries=0;
-  while(k<n&&tries<n*40){tries++;const x=ar[0]+Math.random()*(ar[1]-ar[0]),z=ar[2]+Math.random()*(ar[3]-ar[2]),[d,i]=W.near(x,z);if(d<minD||d>maxD||W.TR.tun[i])continue;const y=W.groundAt(x,z);if(y<minY||y>maxY)continue;fn(x,y,z,k++);}return k;}
+  while(k<n&&tries<n*40){tries++;const x=ar[0]+Math.random()*(ar[1]-ar[0]),z=ar[2]+Math.random()*(ar[3]-ar[2]),[d,i]=W.near(x,z);if(d<minD||d>maxD||W.TR.tun[i])continue;const y=W.groundAt(x,z);if(y<minY||y>maxY)continue;if(W.blocked(x,z,y-1,y+40,3.5))continue;fn(x,y,z,k++);}return k;}
 function mergeParts(parts){const pos=[],nor=[],col=[],idx=[],v=new THREE.Vector3(),nn=new THREE.Vector3(),nm=new THREE.Matrix3();let off=0;
   for(const{g,m,c}of parts){const P=g.attributes.position,Nn=g.attributes.normal;nm.getNormalMatrix(m);for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(m);nn.fromBufferAttribute(Nn,i).applyMatrix3(nm).normalize();pos.push(v.x,v.y,v.z);nor.push(nn.x,nn.y,nn.z);col.push(c.r,c.g,c.b);}
     const I=g.index;if(I)for(let i=0;i<I.count;i++)idx.push(I.getX(i)+off);else for(let i=0;i<P.count;i++)idx.push(i+off);off+=P.count;}
@@ -4536,21 +4541,39 @@ function mergeParts(parts){const pos=[],nor=[],col=[],idx=[],v=new THREE.Vector3
 const MX=(x,y,z,sx=1,sy=1,sz=1,rx=0,ry=0,rz=0)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(sx,sy,sz));
 // a waterfall pouring off a cliff beside the first gorge, into a river at the bottom
 let FALLS=null;
-function waterTex(streak){const c=document.createElement("canvas");c.width=256;c.height=512;const x=c.getContext("2d");x.fillStyle=streak?"#7fa9b8":"#2d6f86";x.fillRect(0,0,256,512);
-  for(let i=0;i<(streak?260:180);i++){const a=Math.random();x.fillStyle=streak?`rgba(255,255,255,${.25+a*.6})`:`rgba(180,225,240,${.1+a*.25})`;const w=streak?2+Math.random()*6:20+Math.random()*60,h=streak?40+Math.random()*160:3+Math.random()*5;x.fillRect(Math.random()*256,Math.random()*512,w,h);}
+function waterTex(kind){const c=document.createElement("canvas");c.width=512;c.height=1024;const x=c.getContext("2d");
+  if(kind==="fall"){const g=x.createLinearGradient(0,0,512,0);g.addColorStop(0,"rgba(150,190,205,0)");g.addColorStop(.08,"rgba(150,190,205,.85)");g.addColorStop(.92,"rgba(150,190,205,.85)");g.addColorStop(1,"rgba(150,190,205,0)");x.fillStyle=g;x.fillRect(0,0,512,1024);
+    for(let i=0;i<900;i++){const a=Math.random(),px=20+Math.random()*472;x.fillStyle=`rgba(255,255,255,${.15+a*.7})`;x.fillRect(px,Math.random()*1024,1+Math.random()*4,30+Math.random()*220);}}
+  else if(kind==="foam"){x.clearRect(0,0,512,1024);for(let i=0;i<700;i++){const r=4+Math.random()*26;x.fillStyle=`rgba(255,255,255,${.08+Math.random()*.25})`;x.beginPath();x.arc(Math.random()*512,Math.random()*1024,r,0,7);x.fill();}}
+  else{x.fillStyle="#24606f";x.fillRect(0,0,512,1024);for(let i=0;i<400;i++){x.fillStyle=`rgba(190,230,240,${.06+Math.random()*.2})`;x.fillRect(Math.random()*512,Math.random()*1024,30+Math.random()*90,2+Math.random()*5);}}
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
 function buildFalls(th,G){const {TR,N}=W,[A,B]=W.chasms[0],m=Math.floor((A+B)/2),p=TR.p[m],t=TR.p[(m+4)%N].clone().sub(TR.p[(m+N-4)%N]);t.y=0;t.normalize();
-  const side=new THREE.Vector3(-t.z,0,t.x),top=W.HT[m]+16,bot=W.CY[m]-34,H=top-bot,base=p.clone().addScaledVector(side,48).addScaledVector(t,70);base.y=0;
-  // cliff the water falls from
-  const cliff=new THREE.Mesh(lumpy(new THREE.BoxGeometry(60,H+30,26,10,12,4),.12,7),landMat(th,W.key+"r",false));cliff.position.set(base.x,bot+(H+30)/2-6,base.z).addScaledVector(side,14);cliff.lookAt(cliff.position.x-side.x,cliff.position.y,cliff.position.z-side.z);G.add(cliff);
-  const t1=waterTex(true);t1.repeat.set(2,H/40);
-  const fall=new THREE.Mesh(new THREE.PlaneGeometry(16,H,1,1),new THREE.MeshBasicMaterial({map:t1,transparent:true,opacity:.92,depthWrite:false,fog:true}));fall.position.set(base.x,bot+H/2,base.z);fall.lookAt(p.x,bot+H/2,p.z);G.add(fall);
-  // river along the gorge floor
-  const t2=waterTex(false);t2.repeat.set(4,12);const rv=new THREE.Mesh(new THREE.PlaneGeometry(30,140),new THREE.MeshStandardMaterial({map:t2,roughness:.15,metalness:.1,envMapIntensity:1}));rv.rotation.x=-Math.PI/2;rv.rotation.z=Math.atan2(t.x,t.z);let ry=bot+3;for(let j=-260;j<=260;j++){const q=TR.p[(m+j+N)%N];if(Math.hypot(q.x-p.x,q.z-p.z)<90)ry=Math.min(ry,q.y-6);}rv.position.set(p.x,ry,p.z);G.add(rv);
-  // mist where it lands (sprites)
-  const mt=new THREE.CanvasTexture((()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,255,255,.7)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,128,128);return c;})());
-  for(let i=0;i<8;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:mt,transparent:true,opacity:.5,depthWrite:false}));s.scale.setScalar(14+Math.random()*10);s.position.set(base.x+(Math.random()-.5)*16,bot+3+Math.random()*8,base.z+(Math.random()-.5)*16);G.add(s);}
-  FALLS={t1,t2};}
+  const side=new THREE.Vector3(-t.z,0,t.x);for(const [sd,ah] of [[52,70],[52,-40],[-52,70],[-52,-40],[75,90],[-75,90],[100,110]]){const FG=new THREE.Group();G.add(FG);fallsAt(th,FG,p,p.clone().addScaledVector(side,sd).addScaledVector(t,ah),m);let hit=false;FG.traverse(o=>{if(!hit&&o.isMesh&&W.hitsMesh(o))hit=true;});if(!hit)return;G.remove(FG);}FALLS=null;}
+function fallsAt(th,G,p,base,m){
+  const out=new THREE.Vector3(p.x-base.x,0,p.z-base.z).normalize(),bot=W.groundAt(base.x,base.z),top=Math.max(bot+42,W.HT[m]+18),H=top-bot,Wd=20;
+  // cliff behind the fall, its face toward the rider
+  const back=base.clone().addScaledVector(out,-22);const cliff=new THREE.Mesh(lumpy(new THREE.BoxGeometry(80,H+20,40,12,14,6),.14,7),landMat(th,W.key+"r",false));
+  cliff.position.set(back.x,bot+(H+20)/2-10,back.z);cliff.rotation.y=Math.atan2(out.x,out.z);G.add(cliff);
+  // water sheet: flows out over the lip, then curves down (parabola) to the pool
+  const SEG=24,pos=[],uv=[],idx=[];for(let k=0;k<=SEG;k++){const f=k/SEG,dy=f*H,fw=Math.sqrt(dy/H)*7+2.5,v=f*H/18;
+    for(const e of[-1,1]){const q=base.clone().addScaledVector(out,fw-3);q.x+=-out.z*e*Wd/2*(1+f*.25);q.z+=out.x*e*Wd/2*(1+f*.25);pos.push(q.x,top-dy,q.z);uv.push(e<0?0:1,v);}
+    if(k<SEG){const a=k*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
+  const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));sg.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));sg.setIndex(idx);sg.computeVertexNormals();
+  const t1=waterTex("fall"),t3=waterTex("fall");t3.repeat.set(1.3,1);t3.offset.x=.3;
+  const mk=(tx,o)=>new THREE.Mesh(sg,new THREE.MeshBasicMaterial({map:tx,transparent:true,opacity:o,depthWrite:false,side:THREE.DoubleSide,fog:true}));
+  G.add(mk(t1,.95));const s2=mk(t3,.55);s2.position.addScaledVector(out,.8);G.add(s2);
+  // river on top of the cliff feeding the lip
+  const t2=waterTex("river");t2.repeat.set(1,3);const rv=new THREE.Mesh(new THREE.PlaneGeometry(Wd,40),new THREE.MeshStandardMaterial({map:t2,roughness:.1,metalness:.1}));rv.rotation.x=-Math.PI/2;rv.rotation.z=Math.atan2(out.x,out.z)+Math.PI;
+  const rp=base.clone().addScaledVector(out,-20);rv.position.set(rp.x,top+.2,rp.z);G.add(rv);
+  // pool at the bottom with foam
+  const pool=new THREE.Mesh(new THREE.CircleGeometry(24,40),new THREE.MeshStandardMaterial({map:t2,roughness:.08,metalness:.15}));pool.rotation.x=-Math.PI/2;const pp=base.clone().addScaledVector(out,9);pool.position.set(pp.x,bot+.6,pp.z);G.add(pool);
+  const tf=waterTex("foam");const foam=new THREE.Mesh(new THREE.CircleGeometry(15,32),new THREE.MeshBasicMaterial({map:tf,transparent:true,depthWrite:false}));foam.rotation.x=-Math.PI/2;foam.position.set(pp.x,bot+.75,pp.z);G.add(foam);
+  // spray: soft sprites rising and fading at the impact point
+  const mt=new THREE.CanvasTexture((()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,255,255,.8)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,128,128);return c;})());
+  const spray=[];for(let i=0;i<26;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:mt,transparent:true,depthWrite:false,fog:true}));sp.userData={ph:Math.random(),x:(Math.random()-.5)*Wd,z:(Math.random()-.2)*10};G.add(sp);spray.push(sp);}
+  FALLS={t1,t2,t3,tf,spray,o:pp.clone(),bot,out:out.clone()};}
+function stepFalls(dt){if(!FALLS)return;const F=FALLS;F.t1.offset.y+=dt*1.5;F.t3.offset.y+=dt*1.15;F.t2.offset.y-=dt*.25;F.tf.offset.x+=dt*.03;F.tf.offset.y+=dt*.02;
+  for(const sp of F.spray){const u=sp.userData;u.ph=(u.ph+dt*.35)%1;const s=6+u.ph*16;sp.scale.set(s,s,1);sp.position.set(F.o.x-F.out.z*u.x+F.out.x*u.z*.5,F.bot+1+u.ph*14,F.o.z+F.out.x*u.x+F.out.z*u.z*.5);sp.material.opacity=.55*(1-u.ph);}}
 function lumpy(g,amt,seed=1){const p=g.attributes.position,v=new THREE.Vector3();for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const k=1+(vnoise(v.x*1.7+seed,v.y*1.7+v.z*1.3+seed)-.5)*amt;p.setXYZ(i,v.x*k,v.y*k,v.z*k);}g.computeVertexNormals();return g;}
 function treeGeo(kind,snowy){const parts=[],bark=LIN("#3d2a1d"),dark=LIN("#1c3a22"),mid=LIN("#27492a"),leaf=LIN("#3d5e27"),snow=LIN("#eef3f8");
   if(kind==="pine"){parts.push({g:new THREE.CylinderGeometry(.12,.22,2.2,7),m:MX(0,1.1,0),c:bark});
@@ -4622,7 +4645,7 @@ function buildSteel(th,G){const {TR,N,L}=W,steel=new THREE.MeshStandardMaterial(
   {const step=Math.round(1.2/(L/N)),cnt=Math.floor(N/step)*2+2,tie=new THREE.InstancedMesh(new THREE.BoxGeometry(1.2,.08,.1),steel,cnt),m4=new THREE.Matrix4(),q=new THREE.Quaternion(),mb=new THREE.Matrix4(),c=new THREE.Vector3(),one=new THREE.Vector3(1,1,1),tall=new THREE.Vector3(.08,4.2,1);let k=0;
    for(let i=0;i<N&&k<cnt-1;i+=step){mb.makeBasis(TR.r[i],TR.u[i],TR.t[i]);q.setFromRotationMatrix(mb);c.copy(TR.p[i]).addScaledVector(TR.u[i],-.07);m4.compose(c,q,one);tie.setMatrixAt(k++,m4);c.copy(TR.p[i]).addScaledVector(TR.u[i],-.24);m4.compose(c,q,tall);tie.setMatrixAt(k++,m4);}
    tie.count=k;tie.castShadow=true;G.add(tie);}
-  {const step=Math.round(13/(L/N)),cols=[];for(let i=0;i<N;i+=step){if(TR.u[i].y<.6||TR.tun[i])continue;const p=TR.p[i].clone().addScaledVector(TR.u[i],-.55),gy=W.groundAt(p.x,p.z);if(p.y-gy>1.2)cols.push([p,gy]);}
+  {const step=Math.round(13/(L/N)),cols=[];for(let i=0;i<N;i+=step){if(TR.u[i].y<.6||TR.tun[i])continue;const p=TR.p[i].clone().addScaledVector(TR.u[i],-.55),gy=W.groundAt(p.x,p.z);if(p.y-gy>1.2&&!(p.y-gy>6&&W.blocked(p.x,p.z,gy,p.y-5,.5)))cols.push([p,gy]);}
    const col=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,1,12),grey,Math.max(1,cols.length)),foot=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:LIN("#a49c90"),roughness:.9}),Math.max(1,cols.length)),m4=new THREE.Matrix4(),q=new THREE.Quaternion();
    cols.forEach(([p,gy],i)=>{const h=p.y-gy+.6,r=h>25?.34:.24;m4.compose(new THREE.Vector3(p.x,gy-.6+h/2,p.z),q,new THREE.Vector3(r,h,r));col.setMatrixAt(i,m4);m4.compose(new THREE.Vector3(p.x,gy+.1,p.z),q,new THREE.Vector3(r*4,.5,r*4));foot.setMatrixAt(i,m4);});
    col.count=foot.count=cols.length;col.castShadow=foot.castShadow=true;col.receiveShadow=foot.receiveShadow=true;G.add(col);G.add(foot);}
@@ -5051,7 +5074,7 @@ function startLoop(){renderer.setAnimationLoop(()=>{let dt=Math.min(clock.getDel
     if(c>=12&&c<14)pos.lerp(Q,k(12,14));else if(c>=14&&c<24){pos.copy(Q);perch=1;}else if(c>=24&&c<26)pos.copy(Q).lerp(B,k(24,26));
     const away=c<2?(2-c)*5:c>30?(c-30)*5:0,wb=1-perch;P.visible=mode==="menu"||c<32;
     P.position.set(pos.x+away+wb*Math.sin(t*.9)*.25,pos.y+wb*Math.sin(t*2.1)*.15,pos.z+wb*Math.sin(t*.6)*.2);P.rotation.z=wb*Math.sin(t*1.3)*.12;const pm=P.userData.b.userData.mx;if(pm)pm.timeScale=perch?.12:1;const bm=P.userData.b.userData.bm;if(bm){const w=Math.sin(t*14)*.6;bm.userData.w[0].rotation.z=w;bm.userData.w[1].rotation.z=-w;}}
-  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);stepVolcano(dt);if(FALLS){FALLS.t1.offset.y-=dt*1.6;FALLS.t2.offset.y-=dt*.08;FALLS.t2.offset.x+=dt*.02;}
+  for(const m of W.mixers)m.update(dt);stepSnow(dt,t);stepSpray(dt);stepVolcano(dt);stepFalls(dt);
   if(W.water)W.water.offset.set(t*.01,t*.007);for(const f of W.anim)f(t);
   for(const T of W.targets){if(T.pop>0){T.pop-=dt;T.g.scale.setScalar(Math.max(.01,1.35*(1+(.35-T.pop)*4)));if(T.pop<=0)T.g.visible=false;}else if(T.g.visible)T.g.rotation.z+=dt;}
   for(let i=beams.length-1;i>=0;i--){beams[i].t-=dt;beams[i].line.material.opacity=beams[i].t/.12;if(beams[i].t<=0){scene.remove(beams[i].line);beams[i].line.geometry.dispose();beams.splice(i,1);}}
